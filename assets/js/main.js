@@ -213,38 +213,75 @@
         // remove acentos para que "prevencao" encontre "prevenção"
         .replace(/[\u0300-\u036f]/g, '');
 
+    const contexto = $('#searchContext');
+    const escapar = (s) =>
+      String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const cartao = (item) =>
+      '<li><a class="result" href="' + item.url + '">' +
+      '<p class="path">' + item.section + '</p>' +
+      '<h3>' + item.title + '</h3>' +
+      '<p>' + item.description + '</p>' +
+      '</a></li>';
+
     function render(query) {
       const terms = normalize(query).split(/\s+/).filter(Boolean);
-      const matches = !terms.length
-        ? window.SEARCH_INDEX
-        : window.SEARCH_INDEX.filter(function (item) {
-            const haystack = normalize(
-              [item.title, item.description, item.section, item.keywords].join(' ')
-            );
-            return terms.every((term) => haystack.indexOf(term) !== -1);
-          });
 
-      results.innerHTML = matches
-        .map(function (item) {
-          return (
-            '<li><a class="result" href="' + item.url + '">' +
-            '<p class="path">' + item.section + '</p>' +
-            '<h3>' + item.title + '</h3>' +
-            '<p>' + item.description + '</p>' +
-            '</a></li>'
-          );
-        })
-        .join('');
+      // Duas buscas distintas: por assunto (título, seção, palavras-chave) e
+      // por sintoma. Saber por qual via a página casou é o que permite não
+      // devolver uma lista de cânceres para quem digitou "náusea".
+      const porAssunto = [];
+      const porSintoma = [];
+      if (!terms.length) {
+        porAssunto.push.apply(porAssunto, window.SEARCH_INDEX);
+      } else {
+        window.SEARCH_INDEX.forEach(function (item) {
+          const assunto = normalize([item.title, item.description, item.section, item.keywords].join(' '));
+          const sintomas = normalize(item.sintomas || '');
+          if (terms.every((t) => assunto.indexOf(t) !== -1)) porAssunto.push(item);
+          else if (terms.every((t) => sintomas.indexOf(t) !== -1)) porSintoma.push(item);
+        });
+      }
+      const total = porAssunto.length + porSintoma.length;
+
+      let html = porAssunto.map(cartao).join('');
+      if (porSintoma.length) {
+        html +=
+          '<li class="results-divider"><h2>Tipos de câncer em que esse sintoma pode aparecer</h2>' +
+          '<p>Aparecer nesta lista não indica probabilidade — apenas que o sintoma consta ' +
+          'entre as manifestações possíveis.</p></li>' +
+          porSintoma.map(cartao).join('');
+      }
+      results.innerHTML = html;
+
+      // Aviso de enquadramento: só quando a pessoa chegou por sintoma.
+      if (contexto) {
+        if (porSintoma.length) {
+          contexto.innerHTML =
+            '<div class="alert-box alert-box--blue">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>' +
+            '<div><p><strong>Antes de ler os resultados.</strong> Sintomas isolados quase sempre têm ' +
+            'causas comuns e benignas — e “' + escapar(query.trim()) + '” não é exceção. O que pede ' +
+            'avaliação médica é a <strong>persistência</strong>: queixas que não melhoram em algumas ' +
+            'semanas, que voltam com frequência ou que mudam de padrão.</p>' +
+            '<p style="margin-bottom:0;"><a href="prevencao.html#sinais">Ver quando um sinal merece avaliação</a> · ' +
+            '<a href="contato.html">Falar com a equipe</a></p></div></div>';
+          contexto.hidden = false;
+        } else {
+          contexto.innerHTML = '';
+          contexto.hidden = true;
+        }
+      }
 
       if (summary) {
         if (!terms.length) {
-          summary.textContent = 'Mostrando todas as ' + matches.length + ' páginas do site.';
-        } else if (!matches.length) {
+          summary.textContent = 'Mostrando todas as ' + total + ' páginas do site.';
+        } else if (!total) {
           summary.textContent =
             'Nenhum resultado para “' + query + '”. Tente outras palavras, como “sinais”, “tratamento” ou “consulta”.';
         } else {
           summary.textContent =
-            matches.length + (matches.length === 1 ? ' resultado' : ' resultados') + ' para “' + query + '”.';
+            total + (total === 1 ? ' resultado' : ' resultados') + ' para “' + query + '”.';
         }
       }
     }
