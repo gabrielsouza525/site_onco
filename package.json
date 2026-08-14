@@ -1,0 +1,11 @@
+{
+  "name": "site-dr-bruno-kersten",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site institucional do Dr. Bruno Kersten — Oncologia Clínica (Araçatuba/SP)",
+  "scripts": {
+    "build": "node build.js",
+    "start": "npx http-server -p 8080 -c-1 ."
+  },
+  "license": "UNLICENSED"
+}

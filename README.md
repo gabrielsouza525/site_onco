@@ -1,0 +1,108 @@
+# Site — Dr. Bruno Kersten | Oncologia Clínica
+
+Site institucional estático do Dr. Bruno Kersten, médico oncologista em Araçatuba/SP.
+O conteúdo foi construído a partir do documento original de referência e a estrutura de
+navegação segue o formato de **portal de informação ao paciente**, inspirado no site do
+Instituto Oncoguia (menu por temas, acesso rápido, área de conteúdos, busca interna e
+rodapé com múltiplas colunas).
+
+Não há dependências, framework ou etapa de compilação obrigatória para publicar: o HTML
+final fica versionado na raiz do repositório.
+
+---
+
+## Estrutura
+
+```
+.
+├── index.html                    ← páginas geradas (não editar à mão)
+├── sobre.html
+├── atuacao.html
+├── jornada.html
+├── prevencao.html
+├── noticias.html
+├── artigo-campanhas.html
+├── artigo-tratamentos.html
+├── artigo-psico-oncologia.html
+├── contato.html
+├── busca.html
+├── 404.html
+│
+├── build.js                      ← gerador (Node, sem dependências)
+├── src/
+│   ├── layout.html               ← esqueleto <head>/<body> comum
+│   ├── partials/
+│   │   ├── header.html           ← barra de aviso, logo, menu, busca
+│   │   └── footer.html           ← rodapé
+│   └── pages/                    ← conteúdo de cada página
+│
+└── assets/
+    ├── css/styles.css            ← design system completo
+    ├── js/main.js                ← menu, carrossel, busca, formulários
+    ├── js/search-index.js        ← gerado pelo build.js
+    └── img/                      ← logo e favicon (SVG)
+```
+
+## Como editar
+
+O cabeçalho e o rodapé são compartilhados: edite-os **uma vez** em `src/partials/` e
+regenere as páginas.
+
+```bash
+node build.js      # ou: npm run build
+```
+
+Para editar o conteúdo de uma página, altere o arquivo correspondente em `src/pages/` e
+rode o build novamente. Título, descrição e palavras-chave de busca de cada página ficam
+no array `PAGES`, no topo de `build.js`.
+
+## Como visualizar localmente
+
+```bash
+npx http-server -p 8080 .     # ou: python3 -m http.server 8080
+```
+
+Abra <http://localhost:8080>. Abrir os arquivos direto pelo `file://` também funciona.
+
+## Publicação
+
+Qualquer hospedagem estática serve. No GitHub Pages, basta apontar para a raiz da branch —
+as páginas já estão versionadas. O arquivo `404.html` é reconhecido automaticamente.
+
+---
+
+## ⚠️ Antes de colocar no ar: dados a preencher
+
+O documento de origem trazia campos em aberto, que foram mantidos **visíveis de propósito**
+para não publicar informação inventada sobre um profissional de saúde. Procure por `[` no
+projeto e substitua:
+
+| Onde | O que preencher |
+|---|---|
+| `src/pages/sobre.html`, `src/pages/index.html` | `CRM/SP [a preencher com o registro oficial]` |
+| `src/pages/sobre.html`, `src/pages/index.html` | `[inserir instituições/títulos]` da formação |
+| `src/partials/footer.html`, `src/pages/contato.html`, `src/pages/index.html` | `[Endereço completo a inserir]` |
+| `src/partials/header.html`, `src/partials/footer.html`, `src/pages/contato.html`, `src/pages/index.html` | telefone `(18) 0000-0000` |
+| `src/partials/footer.html` | links de redes sociais (`href="#"`) |
+| `src/pages/sobre.html`, `src/pages/index.html` | foto real no lugar da ilustração do retrato |
+
+Também vale revisar, com o próprio médico, se a divulgação está de acordo com as normas do
+Conselho Federal de Medicina sobre publicidade médica.
+
+## Formulários
+
+Os formulários de contato e de newsletter são **demonstrações**: exibem uma mensagem de
+confirmação via JavaScript e não enviam nada. Para ativá-los, aponte o `action` do
+formulário para um serviço de envio (Formspree, Basin, um endpoint próprio) ou trate o
+`submit` em `assets/js/main.js` — a marcação `data-demo-form` é o gancho que hoje intercepta
+o envio.
+
+## Acessibilidade e desempenho
+
+- Navegação por teclado com link "pular para o conteúdo" e foco visível.
+- Carrossel com pausa ao passar o mouse/foco, setas do teclado, gesto de arrastar e respeito
+  a `prefers-reduced-motion`.
+- Menu mobile com `aria-expanded`, fechamento por `Esc` e por clique no fundo.
+- Imagens são SVG inline ou arquivos leves; sem bibliotecas externas de JavaScript.
+- Única requisição externa: as fontes do Google Fonts (Poppins e Open Sans). Se preferir um
+  site 100% autocontido, hospede as fontes localmente e remova o `<link>` de `src/layout.html`.

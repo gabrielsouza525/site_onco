@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+*.log
+
+# Windows / OneDrive
+Thumbs.db
+desktop.ini
+
+# Ferramentas locais
+.claude/

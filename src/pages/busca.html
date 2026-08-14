@@ -1,0 +1,36 @@
+<div class="page-head">
+  <div class="wrap">
+    <ol class="breadcrumb">
+      <li><a href="index.html">Início</a></li>
+      <li aria-current="page">Busca</li>
+    </ol>
+    <h1>Busca no site</h1>
+    <p class="lead">
+      Encontre conteúdos sobre prevenção, diagnóstico, tratamento e acompanhamento oncológico.
+    </p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="wrap wrap--narrow">
+    <form class="search-box" id="searchForm" role="search">
+      <label for="searchQuery" class="visually-hidden">Buscar no site</label>
+      <input type="search" id="searchQuery" name="q" placeholder="Ex.: sinais de alerta, tratamento, segunda opinião" autocomplete="off">
+      <button type="submit" class="btn btn--blue">Buscar</button>
+    </form>
+
+    <p id="searchSummary" role="status" style="color:var(--muted); font-size:14.5px;"></p>
+
+    <ul class="results" id="searchResults"></ul>
+
+    <noscript>
+      <div class="alert-box alert-box--blue" style="margin-top:20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>
+        <p>
+          A busca precisa de JavaScript ativado. Use o menu principal para navegar pelas seções do
+          site.
+        </p>
+      </div>
+    </noscript>
+  </div>
+</section>

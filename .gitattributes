@@ -1,0 +1,10 @@
+# Normaliza quebras de linha: LF no repositório, nativo no working copy.
+* text=auto
+
+# Binários — nunca normalizar.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
