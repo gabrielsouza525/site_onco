@@ -1228,8 +1228,16 @@ button { cursor: pointer; }
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: #fff;
+  /* Explícito: sem isto o texto herda a cor do container e some quando o
+     campo está sobre fundo escuro (como na faixa de tipos de câncer). */
+  color: var(--ink);
   outline: none;
   transition: border-color .18s ease, box-shadow .18s ease;
+}
+.field select option,
+.field select optgroup {
+  color: var(--ink);
+  background: #fff;
 }
 .field input:focus,
 .field textarea:focus,
