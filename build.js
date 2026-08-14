@@ -416,7 +416,11 @@ for (const c of CANCERS) {
     description: c.resumo,
     searchTitle: c.nome,
     section: 'Tipos de câncer',
-    keywords: `${c.nome} ${c.grupo} sintomas tratamento prevencao diagnostico fatores de risco ${c.sintomas.join(' ')}`,
+    // Os sintomas ficam fora de `keywords` de propósito: guardados à parte, a
+    // busca consegue distinguir quem chegou pelo assunto de quem chegou por um
+    // sintoma — e tratar os dois casos de forma diferente.
+    keywords: `${c.nome} ${c.grupo} sintomas tratamento prevencao diagnostico fatores de risco`,
+    sintomas: c.sintomas.join(' '),
     content: paginaCancer(c),
   });
 }
@@ -447,6 +451,7 @@ function buildSearchIndex() {
     section: p.section,
     description: p.description,
     keywords: p.keywords || '',
+    sintomas: p.sintomas || '',
   }));
 
   const file = `/* Gerado automaticamente por build.js — não editar à mão. */

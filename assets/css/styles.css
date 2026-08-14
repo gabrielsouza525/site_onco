@@ -1300,6 +1300,26 @@ button { cursor: pointer; }
   }
 }
 
+/* Busca: separador entre resultados por assunto e resultados por sintoma ---- */
+#searchContext { margin: 18px 0 4px; }
+#searchContext .alert-box p + p { margin-top: 10px; }
+
+.results-divider {
+  list-style: none;
+  margin: 30px 0 6px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.results-divider h2 {
+  font-size: 17px;
+  margin-bottom: .3em;
+}
+.results-divider p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
 /* Lista de sintomas sem numeração, mas com o mesmo peso visual da prose. */
 .signs-list-plain { padding-left: 1.15em; }
 .signs-list-plain li { margin-bottom: .5em; }
