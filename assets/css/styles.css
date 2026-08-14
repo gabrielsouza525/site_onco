@@ -1256,6 +1256,42 @@ button { cursor: pointer; }
 }
 .picker-shell .field-hint { color: var(--muted); }
 
+/* Faixa "Selecione o tipo de câncer" da home ----------------------------- */
+.cancer-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 44px;
+  align-items: center;
+  padding: 42px 46px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(155deg, var(--blue-900) 0%, #0a2a5c 60%, #071f45 100%);
+  color: #cfdcec;
+  box-shadow: var(--shadow-lg);
+}
+.cancer-band h2 { color: #fff; margin-bottom: .35em; }
+.cancer-band .eyebrow { color: #ffb570; }
+.cancer-band .eyebrow::before { background: #ffb570; }
+.cancer-band-text p { margin: 0; max-width: 46ch; }
+
+/* Sobre o fundo escuro, rótulo e dica precisam de contraste próprio —
+   as regras de .section--dark não alcançam esta faixa. */
+.cancer-band .field { margin-bottom: 0; }
+.cancer-band .field label { color: #fff; }
+.cancer-band .field-hint { color: #a9bdd6; }
+.cancer-band .arrow-link {
+  color: #fff;
+  margin-top: 16px;
+}
+.cancer-band .arrow-link:hover { color: #ffb570; }
+
+@media (max-width: 860px) {
+  .cancer-band {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    padding: 32px 26px;
+  }
+}
+
 /* Lista de sintomas sem numeração, mas com o mesmo peso visual da prose. */
 .signs-list-plain { padding-left: 1.15em; }
 .signs-list-plain li { margin-bottom: .5em; }

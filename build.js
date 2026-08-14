@@ -166,6 +166,8 @@ const PAGES = [
  * página-índice `tipos-de-cancer.html` recebe o seletor com todas as opções.
  * ------------------------------------------------------------------------ */
 
+const TOKEN_SELETOR = '{{SELETOR_CANCER}}';
+
 const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -477,6 +479,12 @@ function build() {
         continue;
       }
       corpo = read(pageFile).trimEnd();
+      // Único token aceito no conteúdo das páginas: o seletor de tipo de câncer,
+      // que precisa ser gerado a partir dos dados. Substituição por função para
+      // que cifrões no HTML gerado não sejam interpretados.
+      if (corpo.includes(TOKEN_SELETOR)) {
+        corpo = corpo.split(TOKEN_SELETOR).join(seletor(null, `seletor-${page.slug}`));
+      }
     }
 
     const html = applyTemplate(layout, {
