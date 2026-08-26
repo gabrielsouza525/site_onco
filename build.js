@@ -91,45 +91,15 @@ const PAGES = [
       'prevenção diagnóstico precoce sinais de alerta nódulo caroço perda de peso sangramento tosse exames de rotina hábitos de vida rastreamento',
   },
   {
-    slug: 'noticias',
-    nav: 'noticias',
-    title: 'Notícias & artigos sobre oncologia | Dr. Bruno Kersten',
+    slug: 'direitos',
+    nav: 'direitos',
+    title: 'Leis e direitos do paciente oncológico | Dr. Bruno Kersten',
     description:
-      'Textos informativos sobre oncologia, prevenção e novidades relevantes para pacientes e familiares.',
-    searchTitle: 'Notícias & artigos',
-    section: 'Notícias',
-    keywords: 'notícias artigos conteúdo blog informação oncologia pacientes familiares',
-  },
-  {
-    slug: 'artigo-campanhas',
-    nav: 'noticias',
-    title: 'Outubro Rosa e Novembro Azul: por que as campanhas importam',
-    description:
-      'Entenda como campanhas de conscientização ajudam a ampliar o diagnóstico precoce do câncer de mama e de próstata.',
-    searchTitle: 'Outubro Rosa e Novembro Azul: por que as campanhas importam',
-    section: 'Notícias',
-    keywords: 'outubro rosa novembro azul campanhas conscientização mama próstata diagnóstico precoce rastreamento',
-  },
-  {
-    slug: 'artigo-tratamentos',
-    nav: 'noticias',
-    title: 'Quimioterapia, radioterapia e imunoterapia: entenda as diferenças',
-    description:
-      'Um guia introdutório sobre as principais modalidades de tratamento oncológico e como elas se complementam.',
-    searchTitle: 'Quimioterapia, radioterapia e imunoterapia: entenda as diferenças',
-    section: 'Notícias',
+      'Prazos de tratamento, benefícios do INSS, saque do FGTS e isenções de impostos: os direitos previstos em lei para quem tem diagnóstico de câncer.',
+    searchTitle: 'Leis e direitos do paciente oncológico',
+    section: 'Leis e direitos',
     keywords:
-      'quimioterapia radioterapia imunoterapia terapia alvo cirurgia hormonioterapia tratamento modalidades efeitos colaterais',
-  },
-  {
-    slug: 'artigo-psico-oncologia',
-    nav: 'noticias',
-    title: 'O papel da psico-oncologia durante o tratamento',
-    description:
-      'Como o suporte emocional contribui para a adesão ao tratamento e para o bem-estar do paciente e da família.',
-    searchTitle: 'O papel da psico-oncologia durante o tratamento',
-    section: 'Notícias',
-    keywords: 'psico-oncologia apoio emocional psicologia ansiedade família cuidador adesão bem-estar suporte',
+      'direitos leis paciente oncologico beneficios inss fgts pis pasep isencao imposto de renda ipi ipva bpc loas auxilio doenca aposentadoria tfd reconstrucao mamaria defensoria servico social 60 dias',
   },
   {
     slug: 'contato',
@@ -313,7 +283,7 @@ ${
           <ul class="side-nav">
             <li><a href="prevencao.html#sinais">Sinais de alerta</a></li>
             <li><a href="prevencao.html#exames">Exames de rotina e rastreamento</a></li>
-            <li><a href="artigo-tratamentos.html">Modalidades de tratamento</a></li>
+            <li><a href="direitos.html">Leis e direitos do paciente</a></li>
             <li><a href="jornada.html">A jornada do cuidado</a></li>
           </ul>
         </div>
@@ -385,7 +355,7 @@ ${blocos}
           <ul class="side-nav">
             <li><a href="prevencao.html#sinais">Sinais de alerta</a></li>
             <li><a href="prevencao.html#exames">Exames de rotina e rastreamento</a></li>
-            <li><a href="artigo-tratamentos.html">Modalidades de tratamento</a></li>
+            <li><a href="direitos.html">Leis e direitos do paciente</a></li>
             <li><a href="jornada.html">A jornada do cuidado</a></li>
           </ul>
         </div>
@@ -511,10 +481,12 @@ function build() {
   // Remove páginas de tipo que existiam em builds anteriores e não estão mais
   // em src/data/cancers.js — sem isso, renomear ou desdobrar um tipo deixaria
   // um arquivo órfão publicado.
+  // Todo .html da raiz é saída deste gerador, então qualquer um que não esteja
+  // mais em PAGES é sobra de um build anterior.
   const esperadas = new Set(PAGES.map((p) => `${p.slug}.html`));
   let removidas = 0;
   for (const arquivo of fs.readdirSync(ROOT)) {
-    if (!/^cancer-.+\.html$/.test(arquivo)) continue;
+    if (!/\.html$/.test(arquivo)) continue;
     if (esperadas.has(arquivo)) continue;
     fs.unlinkSync(path.join(ROOT, arquivo));
     console.log(`  - removida página órfã: ${arquivo}`);

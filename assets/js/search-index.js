@@ -41,35 +41,11 @@ window.SEARCH_INDEX = [
     "sintomas": ""
   },
   {
-    "title": "Notícias & artigos",
-    "url": "noticias.html",
-    "section": "Notícias",
-    "description": "Textos informativos sobre oncologia, prevenção e novidades relevantes para pacientes e familiares.",
-    "keywords": "notícias artigos conteúdo blog informação oncologia pacientes familiares",
-    "sintomas": ""
-  },
-  {
-    "title": "Outubro Rosa e Novembro Azul: por que as campanhas importam",
-    "url": "artigo-campanhas.html",
-    "section": "Notícias",
-    "description": "Entenda como campanhas de conscientização ajudam a ampliar o diagnóstico precoce do câncer de mama e de próstata.",
-    "keywords": "outubro rosa novembro azul campanhas conscientização mama próstata diagnóstico precoce rastreamento",
-    "sintomas": ""
-  },
-  {
-    "title": "Quimioterapia, radioterapia e imunoterapia: entenda as diferenças",
-    "url": "artigo-tratamentos.html",
-    "section": "Notícias",
-    "description": "Um guia introdutório sobre as principais modalidades de tratamento oncológico e como elas se complementam.",
-    "keywords": "quimioterapia radioterapia imunoterapia terapia alvo cirurgia hormonioterapia tratamento modalidades efeitos colaterais",
-    "sintomas": ""
-  },
-  {
-    "title": "O papel da psico-oncologia durante o tratamento",
-    "url": "artigo-psico-oncologia.html",
-    "section": "Notícias",
-    "description": "Como o suporte emocional contribui para a adesão ao tratamento e para o bem-estar do paciente e da família.",
-    "keywords": "psico-oncologia apoio emocional psicologia ansiedade família cuidador adesão bem-estar suporte",
+    "title": "Leis e direitos do paciente oncológico",
+    "url": "direitos.html",
+    "section": "Leis e direitos",
+    "description": "Prazos de tratamento, benefícios do INSS, saque do FGTS e isenções de impostos: os direitos previstos em lei para quem tem diagnóstico de câncer.",
+    "keywords": "direitos leis paciente oncologico beneficios inss fgts pis pasep isencao imposto de renda ipi ipva bpc loas auxilio doenca aposentadoria tfd reconstrucao mamaria defensoria servico social 60 dias",
     "sintomas": ""
   },
   {
