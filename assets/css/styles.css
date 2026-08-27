@@ -2076,27 +2076,21 @@ button { cursor: pointer; }
   .auth-card { padding: 24px 18px; border-radius: 18px; }
 }
 
-/* Acesso à área administrativa, no rodapé -------------------------------- */
-/* Discreto de propósito: é atalho para a equipe, não conteúdo para quem
-   visita o site. Ganha destaque só no hover e no foco por teclado. */
-.admin-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 13px;
-  border: 1px solid rgba(255, 255, 255, .16);
+/* Acesso à área administrativa, na faixa do topo ------------------------- */
+/* Sem ícone e com peso normal, ao contrário dos vizinhos: é atalho da equipe,
+   não informação de contato para quem visita. A borda dá o contorno de botão
+   sem competir com o telefone e a cidade. */
+.topbar-links .admin-link {
+  padding: 3px 11px;
+  border: 1px solid rgba(255, 255, 255, .22);
   border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: var(--font-head);
-  color: #8ba3c0;
-  white-space: nowrap;
+  font-weight: 500;
+  color: #9db3cc;
   transition: color .18s ease, border-color .18s ease, background-color .18s ease;
 }
-.admin-link svg { width: 14px; height: 14px; }
-.admin-link:hover,
-.admin-link:focus-visible {
+.topbar-links .admin-link:hover,
+.topbar-links .admin-link:focus-visible {
   color: #fff;
-  border-color: rgba(255, 255, 255, .4);
-  background: rgba(255, 255, 255, .07);
+  border-color: rgba(255, 255, 255, .45);
+  background: rgba(255, 255, 255, .08);
 }
