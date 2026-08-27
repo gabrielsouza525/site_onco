@@ -1905,7 +1905,7 @@ button { cursor: pointer; }
   height: 38px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-sm);
+  border-radius: 11px;
   background: rgba(255, 255, 255, .08);
   color: #ffb570;
 }
@@ -1937,8 +1937,8 @@ button { cursor: pointer; }
   max-width: 420px;
   background: #16202f;
   border: 1px solid #24344a;
-  border-radius: var(--radius-lg);
-  padding: 26px;
+  border-radius: 20px;
+  padding: 28px 26px;
 }
 
 .auth-tabs {
@@ -1947,14 +1947,14 @@ button { cursor: pointer; }
   gap: 6px;
   background: #0f1826;
   border: 1px solid #24344a;
-  border-radius: var(--radius);
+  border-radius: 14px;
   padding: 5px;
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 .auth-tab {
   text-align: center;
   padding: 9px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 14.5px;
@@ -1968,6 +1968,7 @@ button { cursor: pointer; }
 .auth-card .field input {
   background: #0f1826;
   border-color: #2a3c55;
+  border-radius: 12px;
   color: #eaf1f8;
 }
 .auth-card .field input::placeholder { color: #6d8199; }
@@ -1989,7 +1990,7 @@ button { cursor: pointer; }
   place-items: center;
   background: none;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   color: #8ba0bb;
 }
 .reveal:hover { color: #fff; background: rgba(255, 255, 255, .06); }
@@ -2008,12 +2009,27 @@ button { cursor: pointer; }
 .checkbox { display: inline-flex; align-items: center; gap: 8px; color: #dbe6f2; cursor: pointer; }
 .checkbox input { width: 16px; height: 16px; accent-color: var(--blue-600); }
 
-.auth-submit { margin-top: 2px; }
+.auth-submit {
+  margin-top: 2px;
+  padding: 11px 20px;
+  font-size: 14.5px;
+  border-radius: 12px;
+  background: var(--blue-300);
+  border-color: var(--blue-300);
+  color: var(--blue-900);
+  box-shadow: none;
+}
+.auth-submit:hover {
+  background: #a8cef0;
+  border-color: #a8cef0;
+  color: var(--blue-900);
+}
+.auth-submit svg { width: 16px; height: 16px; }
 
 .auth-feedback {
   margin: 16px 0 0;
   padding: 11px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   font-size: 14px;
   border: 1px solid transparent;
 }
@@ -2057,5 +2073,5 @@ button { cursor: pointer; }
 @media (max-width: 560px) {
   .auth-features li { margin-bottom: 18px; }
   .auth-stats { gap: 24px; }
-  .auth-card { padding: 22px 18px; }
+  .auth-card { padding: 24px 18px; border-radius: 18px; }
 }
