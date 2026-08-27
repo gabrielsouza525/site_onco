@@ -1,0 +1,62 @@
+# Decap CMS — painel para editar o conteúdo do site sem mexer em código.
+#
+# COMO FUNCIONA
+# O CMS grava direto nos arquivos de src/ e faz um commit no repositório.
+# O workflow .github/workflows/build.yml roda o build.js e regenera o HTML,
+# e o GitHub Pages republica. Nenhum passo manual.
+#
+# AUTENTICAÇÃO — leia antes de publicar
+# O backend "github" precisa de um servidor de OAuth para trocar o código de
+# login por um token; o GitHub Pages não tem servidor. Enquanto isso não for
+# resolvido (ver README), use o modo local: `npx decap-server` em um terminal
+# e `npm start` em outro, depois abra http://localhost:8080/admin/.
+# O local_backend abaixo é ignorado quando o site está publicado.
+
+backend:
+  name: github
+  repo: gabrielsouza525/site_onco
+  branch: main
+  commit_messages:
+    create: 'Cria {{collection}} "{{slug}}" pelo painel'
+    update: 'Atualiza {{collection}} "{{slug}}" pelo painel'
+    delete: 'Remove {{collection}} "{{slug}}" pelo painel'
+    uploadMedia: 'Envia {{path}} pelo painel'
+    deleteMedia: 'Remove {{path}} pelo painel'
+
+# Permite editar na própria máquina, sem OAuth.
+local_backend: true
+
+media_folder: assets/img
+public_folder: assets/img
+
+locale: pt
+publish_mode: simple
+
+collections:
+  # ---------------------------------------------------------------------
+  - name: contato
+    label: Contato e redes
+    files:
+      - name: dados
+        label: Dados de contato
+        file: src/data/site.json
+        description: >-
+          Aparecem no topo do site, no rodapé e na página de contato.
+          Alterar aqui muda em todas as páginas de uma vez.
+        fields:
+          - { name: telefone, label: Telefone, widget: string, hint: 'Como deve aparecer na tela. Ex.: (18) 3621-0000' }
+          - { name: endereco, label: Endereço completo, widget: string, hint: 'Rua, número, bairro e CEP' }
+          - { name: cidade, label: Cidade e estado, widget: string }
+          - { name: horario, label: Horário de atendimento, widget: string }
+          - { name: instagram, label: Instagram, widget: string, required: false, hint: 'Endereço completo do perfil. Deixe vazio para esconder o ícone.' }
+          - { name: facebook, label: Facebook, widget: string, required: false }
+          - { name: linkedin, label: LinkedIn, widget: string, required: false }
+          - { name: whatsapp, label: WhatsApp, widget: string, required: false, hint: 'Ex.: https://wa.me/5518999999999' }
+
+  # ---------------------------------------------------------------------
+  # AINDA NÃO EDITÁVEIS AQUI
+  # O texto das páginas vive em src/pages/*.html, e o Decap só edita YAML,
+  # JSON, TOML ou markdown com front-matter — HTML cru não entra. Para abrir
+  # as páginas ao painel seria preciso converter o conteúdo para markdown e
+  # ensinar o build.js a renderizá-lo. Mesmo caso de src/data/cancers.js,
+  # que é um módulo JavaScript.

@@ -106,3 +106,49 @@ o envio.
 - Imagens são SVG inline ou arquivos leves; sem bibliotecas externas de JavaScript.
 - Única requisição externa: as fontes do Google Fonts (Poppins e Open Sans). Se preferir um
   site 100% autocontido, hospede as fontes localmente e remova o `<link>` de `src/layout.html`.
+
+## Editar o site sem mexer em código
+
+O painel fica em `/admin/` e usa o [Decap CMS](https://decapcms.org). Ele grava
+direto nos arquivos de `src/` e faz um commit; o workflow
+`.github/workflows/build.yml` roda o `build.js`, regenera o HTML e o GitHub
+Pages republica. Nenhum passo manual.
+
+### O que já dá para editar
+
+**Contato e redes** (`src/data/site.json`) — telefone, endereço, cidade,
+horário e os perfis sociais. Esses valores entram em todas as páginas de uma
+vez, via tokens `{{TELEFONE}}`, `{{ENDERECO}}`, `{{HORARIO}}` e afins,
+resolvidos no build. Uma rede deixada em branco vira `#`.
+
+### O que ainda não dá
+
+O texto das páginas mora em `src/pages/*.html` e os tipos de câncer em
+`src/data/cancers.js`. O Decap só edita YAML, JSON, TOML ou markdown com
+front-matter — HTML cru e módulo JavaScript não entram. Para abrir esse
+conteúdo ao painel seria preciso convertê-lo para markdown e ensinar o
+`build.js` a renderizá-lo.
+
+### Autenticação — o que falta para publicar
+
+O backend `github` precisa de um servidor de OAuth para trocar o código de
+login por um token de acesso, e o **GitHub Pages não tem servidor**. Enquanto
+isso não for resolvido, o painel funciona **apenas na máquina de quem edita**:
+
+```bash
+npx decap-server      # em um terminal
+npm start             # em outro
+```
+
+Depois abra <http://localhost:8080/admin/>.
+
+Para o painel funcionar no site publicado, há dois caminhos:
+
+1. **Publicar o site na Netlify ou na Cloudflare Pages** em vez do GitHub
+   Pages. As duas oferecem autenticação e funções de servidor no plano
+   gratuito, e o Decap passa a funcionar direto. Como o site é estático, a
+   migração é simples.
+2. **Manter o GitHub Pages e subir um proxy de OAuth** próprio (uma função na
+   Cloudflare ou na Vercel), apontando `base_url` no `admin/config.yml` para
+   ele. Evite proxies públicos de terceiros: eles recebem permissão de escrita
+   no repositório.
