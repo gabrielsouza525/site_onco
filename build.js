@@ -106,7 +106,7 @@ const PAGES = [
   {
     slug: 'contato',
     nav: 'contato',
-    title: 'Agende sua consulta — Contato | Dr. Bruno Kersten',
+    title: 'Entre em contato | Dr. Bruno Kersten',
     description:
       'Fale com a equipe do Dr. Bruno Kersten para agendar consulta oncológica em Araçatuba/SP. Atendimento de segunda a sexta, das 8h às 18h.',
     searchTitle: 'Contato e agendamento',
@@ -300,7 +300,7 @@ ${
         <div class="side-box side-box--cta">
           <h3>Converse sobre seu caso</h3>
           <p>Uma consulta define quais exames fazem sentido para o seu histórico e com que frequência.</p>
-          <a href="contato.html" class="btn btn--primary btn--sm btn--block">Agendar consulta</a>
+          <a href="contato.html" class="btn btn--primary btn--sm btn--block">Entre em contato</a>
         </div>
 
         <div class="side-box">
@@ -374,7 +374,7 @@ ${blocos}
         <div class="side-box side-box--cta">
           <h3>Converse sobre seu caso</h3>
           <p>Uma consulta define quais exames fazem sentido para o seu histórico e com que frequência.</p>
-          <a href="contato.html" class="btn btn--primary btn--sm btn--block">Agendar consulta</a>
+          <a href="contato.html" class="btn btn--primary btn--sm btn--block">Entre em contato</a>
         </div>
 
         <div class="side-box">
