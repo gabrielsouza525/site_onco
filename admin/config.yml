@@ -51,7 +51,8 @@ collections:
           - { name: instagram, label: Instagram, widget: string, required: false, hint: 'Endereço completo do perfil. Deixe vazio para esconder o ícone.' }
           - { name: facebook, label: Facebook, widget: string, required: false }
           - { name: linkedin, label: LinkedIn, widget: string, required: false }
-          - { name: whatsapp, label: WhatsApp, widget: string, required: false, hint: 'Ex.: https://wa.me/5518999999999' }
+          - { name: whatsapp, label: WhatsApp da clínica, widget: string, required: false,
+              hint: 'Número com país e DDD. Pode digitar com máscara: +55 (18) 99123-4567. Alimenta o ícone do rodapé E os formulários de contato — sem ele, os formulários avisam que o WhatsApp não está configurado.' }
 
   # ---------------------------------------------------------------------
   # AINDA NÃO EDITÁVEIS AQUI

@@ -160,7 +160,10 @@ const TOKENS_SITE = {
   INSTAGRAM: rede(SITE.instagram),
   FACEBOOK: rede(SITE.facebook),
   LINKEDIN: rede(SITE.linkedin),
-  WHATSAPP: rede(SITE.whatsapp),
+  // O campo guarda so os digitos (ex.: 5518991234567). Daqui saem duas
+  // coisas: o link do icone no rodape e o numero que os formularios usam.
+  WHATSAPP: SITE.whatsapp ? `https://wa.me/${String(SITE.whatsapp).replace(/\D/g, '')}` : '#',
+  WHATSAPP_NUMERO: SITE.whatsapp ? String(SITE.whatsapp).replace(/\D/g, '') : '',
 };
 
 /** Troca os {{TOKENS}} do site, sem tocar nos demais. */

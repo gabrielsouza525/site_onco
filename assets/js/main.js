@@ -182,7 +182,76 @@
   }
 
   /* ----------------------------------------------------------------------
-     5. Formulários (demonstração — sem back-end)
+     5a. Formulários de contato — abrem o WhatsApp
+
+     O site é estático e não tem servidor para receber envios. Em vez de
+     fingir que a mensagem foi enviada, o formulário monta o texto e abre a
+     conversa no WhatsApp da clínica, já preenchida. A pessoa revisa e envia
+     pelo próprio aplicativo, então nada trafega por aqui.
+     ---------------------------------------------------------------------- */
+  $$('form[data-whatsapp-form]').forEach(function (form) {
+    const numero = (form.getAttribute('data-whatsapp') || '').replace(/\D/g, '');
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const feedback = $('.form-feedback', form);
+      const dizer = (texto) => {
+        if (!feedback) return;
+        feedback.hidden = false;
+        feedback.textContent = texto;
+        feedback.setAttribute('role', 'status');
+      };
+
+      const valor = (nome) => {
+        const campo = form.querySelector('[name="' + nome + '"]');
+        if (!campo) return '';
+        // Num <select>, o que interessa é o rótulo que a pessoa leu na tela,
+        // não o valor interno da opção.
+        if (campo.tagName === 'SELECT') {
+          const op = campo.options[campo.selectedIndex];
+          return op ? op.text.trim() : '';
+        }
+        return campo.value.trim();
+      };
+
+      const nome = valor('nome');
+      const email = valor('email');
+      if (!nome || !email) {
+        dizer('Preencha ao menos o nome e o e-mail para continuar.');
+        return;
+      }
+
+      if (!numero) {
+        dizer(
+          'O WhatsApp da clínica ainda não foi configurado. Use os dados de ' +
+          'contato desta página para falar com a equipe.'
+        );
+        return;
+      }
+
+      const linhas = ['Olá! Vim pelo site.', ''];
+      const juntar = (rotulo, v) => { if (v) linhas.push(rotulo + ': ' + v); };
+      juntar('Nome', nome);
+      juntar('Telefone', valor('telefone'));
+      juntar('E-mail', email);
+      juntar('Assunto', valor('assunto'));
+      const msg = valor('mensagem');
+      if (msg) { linhas.push('', 'Mensagem:', msg); }
+
+      const url = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(linhas.join('\n'));
+      const aba = window.open(url, '_blank', 'noopener');
+      if (aba) {
+        dizer('Abrimos o WhatsApp com sua mensagem pronta. Revise e envie por lá.');
+        form.reset();
+      } else {
+        // Bloqueador de pop-up: em vez de perder a mensagem, dá o link.
+        dizer('Seu navegador bloqueou a janela. Toque no botão de novo ou fale pelo telefone desta página.');
+      }
+    });
+  });
+
+  /* ----------------------------------------------------------------------
+     5b. Demais formulários (demonstração — sem back-end)
      ---------------------------------------------------------------------- */
   $$('form[data-demo-form]').forEach(function (form) {
     form.addEventListener('submit', function (event) {
