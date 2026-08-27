@@ -309,7 +309,61 @@
   });
 
   /* ----------------------------------------------------------------------
-     8. Voltar ao topo
+     8. Tela de acesso (área administrativa)
+
+     ATENÇÃO: isto NÃO é autenticação. O site é estático e não tem servidor,
+     então qualquer verificação roda no navegador do visitante e pode ser
+     burlada abrindo o código-fonte. Serve para desenhar o fluxo; a proteção
+     de verdade exige um serviço de autenticação (ver README).
+     ---------------------------------------------------------------------- */
+  const loginForm = $('#loginForm');
+  if (loginForm) {
+    const email = $('#loginEmail');
+    const senha = $('#loginSenha');
+    const feedback = $('#loginFeedback');
+    const revelar = $('#revelarSenha');
+
+    if (revelar) {
+      revelar.addEventListener('click', function () {
+        const visivel = senha.type === 'text';
+        senha.type = visivel ? 'password' : 'text';
+        revelar.setAttribute('aria-pressed', String(!visivel));
+        revelar.setAttribute('aria-label', visivel ? 'Mostrar senha' : 'Ocultar senha');
+        senha.focus();
+      });
+    }
+
+    const dizer = (texto, tipo) => {
+      if (!feedback) return;
+      feedback.textContent = texto;
+      feedback.setAttribute('data-tipo', tipo);
+      feedback.hidden = false;
+    };
+
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const e1 = (email.value || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e1)) {
+        dizer('Informe um e-mail válido.', 'erro');
+        email.focus();
+        return;
+      }
+      if ((senha.value || '').length < 6) {
+        dizer('A senha precisa ter ao menos 6 caracteres.', 'erro');
+        senha.focus();
+        return;
+      }
+      dizer(
+        'Dados válidos. Não há área administrativa para abrir ainda, e nenhuma ' +
+        'informação foi enviada ou guardada.',
+        'ok'
+      );
+      senha.value = '';
+    });
+  }
+
+  /* ----------------------------------------------------------------------
+     9. Voltar ao topo
      ---------------------------------------------------------------------- */
   const toTop = $('#toTop');
   if (toTop) {
