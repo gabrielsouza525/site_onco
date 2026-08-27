@@ -16,6 +16,8 @@ const path = require('path');
 const ROOT = __dirname;
 const SRC = path.join(ROOT, 'src');
 const CANCERS = require('./src/data/cancers');
+// Dados de contato e redes, editaveis pelo CMS sem mexer em codigo.
+const SITE = require('./src/data/site.json');
 
 /* --------------------------------------------------------------------------
  * Mapa de páginas
@@ -146,6 +148,27 @@ const PAGES = [
  * ------------------------------------------------------------------------ */
 
 const TOKEN_SELETOR = '{{SELETOR_CANCER}}';
+
+/* Tokens preenchidos a partir de src/data/site.json. Uma rede social sem
+   endereco vira '#', para o link nao apontar para lugar nenhum. */
+const rede = (v) => (v && v.trim()) ? v.trim() : '#';
+const TOKENS_SITE = {
+  TELEFONE: SITE.telefone || '',
+  ENDERECO: SITE.endereco || '',
+  CIDADE: SITE.cidade || '',
+  HORARIO: SITE.horario || '',
+  INSTAGRAM: rede(SITE.instagram),
+  FACEBOOK: rede(SITE.facebook),
+  LINKEDIN: rede(SITE.linkedin),
+  WHATSAPP: rede(SITE.whatsapp),
+};
+
+/** Troca os {{TOKENS}} do site, sem tocar nos demais. */
+function aplicarTokensSite(html) {
+  return html.replace(/\{\{([A-Z_]+)\}\}/g, (m, k) =>
+    Object.prototype.hasOwnProperty.call(TOKENS_SITE, k) ? TOKENS_SITE[k] : m
+  );
+}
 
 const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -442,12 +465,12 @@ window.SEARCH_INDEX = ${JSON.stringify(entries, null, 2)};
 
 function build() {
   const layout = read(path.join(SRC, 'layout.html'));
-  // Layout sem cabecalho e rodape, para telas que ocupam a janela inteira.
+  // Layout sem cabeçalho e rodapé, para telas que ocupam a janela inteira.
   const layoutBare = read(path.join(SRC, 'layout-bare.html'));
-  const header = read(path.join(SRC, 'partials', 'header.html'));
+  const header = aplicarTokensSite(read(path.join(SRC, 'partials', 'header.html')));
   // O rodapé é resolvido antes de entrar no layout: o conteúdo injetado não é
   // reprocessado pelo template, então {{YEAR}} precisa ser aplicado aqui.
-  const footer = applyTemplate(read(path.join(SRC, 'partials', 'footer.html')), {
+  const footer = applyTemplate(aplicarTokensSite(read(path.join(SRC, 'partials', 'footer.html'))), {
     YEAR: String(new Date().getFullYear()),
   });
 
@@ -464,7 +487,7 @@ function build() {
         console.warn(`  ! ignorada: src/pages/${page.slug}.html não existe`);
         continue;
       }
-      corpo = read(pageFile).trimEnd();
+      corpo = aplicarTokensSite(read(pageFile).trimEnd());
       // Único token aceito no conteúdo das páginas: o seletor de tipo de câncer,
       // que precisa ser gerado a partir dos dados. Substituição por função para
       // que cifrões no HTML gerado não sejam interpretados.

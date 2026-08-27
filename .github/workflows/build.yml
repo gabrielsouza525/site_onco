@@ -1,0 +1,56 @@
+# Regenera o site sempre que o conteúdo-fonte muda.
+#
+# Sem isto, editar algo em src/ não altera o site publicado: o HTML da raiz
+# é gerado pelo build.js e fica versionado, então alguém precisaria rodar o
+# build na própria máquina e commitar o resultado. Com o CMS, quem edita não
+# tem como fazer isso — daí a automação.
+#
+# O commit do bot leva "[skip ci]" na mensagem, que o GitHub Actions
+# reconhece para não disparar o workflow de novo e entrar em laço.
+
+name: Gerar site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.js'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gerar-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Gerar as páginas
+        run: node build.js
+
+      - name: Publicar se algo mudou
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nada mudou — o HTML já estava atualizado."
+            exit 0
+          fi
+
+          echo "Arquivos regenerados:"
+          git status --porcelain
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Regenera o site a partir de src/ [skip ci]"
+          git push
