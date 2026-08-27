@@ -152,3 +152,29 @@ Para o painel funcionar no site publicado, há dois caminhos:
    Cloudflare ou na Vercel), apontando `base_url` no `admin/config.yml` para
    ele. Evite proxies públicos de terceiros: eles recebem permissão de escrita
    no repositório.
+
+## Formulários de contato
+
+Os formulários da página de contato e da home **não enviam e-mail**: montam a
+mensagem e abrem a conversa no WhatsApp da clínica, já preenchida. A pessoa
+revisa e envia pelo próprio aplicativo.
+
+Foi a saída possível — e a mais honesta — para um site estático, que não tem
+servidor para receber envios. O texto não passa por lugar nenhum além do
+navegador de quem escreve.
+
+Para funcionar, preencha o campo **WhatsApp** em `src/data/site.json` (ou pelo
+painel, em *Contato e redes*) com o número em formato internacional. Pode
+digitar com máscara — o build extrai só os dígitos:
+
+```json
+{ "whatsapp": "+55 (18) 99123-4567" }
+```
+
+Enquanto o campo estiver vazio, os formulários avisam que o WhatsApp não foi
+configurado e preservam o que a pessoa digitou, em vez de fingir que enviaram.
+
+O mesmo número alimenta o ícone de WhatsApp no rodapé.
+
+**O cadastro da newsletter continua sendo demonstração** — é outro problema, que
+exige um serviço de lista de e-mails.
