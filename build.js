@@ -112,6 +112,15 @@ const PAGES = [
     keywords: 'contato agendar consulta telefone whatsapp endereço horário araçatuba consultório localização',
   },
   {
+    slug: 'login',
+    nav: null,
+    bare: true,
+    title: 'Entrar — Área administrativa | Dr. Bruno Kersten',
+    description: 'Acesso restrito à equipe responsável pelo conteúdo do site.',
+    indexable: false,
+    section: 'Área administrativa',
+  },
+  {
     slug: 'busca',
     nav: null,
     title: 'Busca no site | Dr. Bruno Kersten',
@@ -433,6 +442,8 @@ window.SEARCH_INDEX = ${JSON.stringify(entries, null, 2)};
 
 function build() {
   const layout = read(path.join(SRC, 'layout.html'));
+  // Layout sem cabecalho e rodape, para telas que ocupam a janela inteira.
+  const layoutBare = read(path.join(SRC, 'layout-bare.html'));
   const header = read(path.join(SRC, 'partials', 'header.html'));
   // O rodapé é resolvido antes de entrar no layout: o conteúdo injetado não é
   // reprocessado pelo template, então {{YEAR}} precisa ser aplicado aqui.
@@ -462,7 +473,7 @@ function build() {
       }
     }
 
-    const html = applyTemplate(layout, {
+    const html = applyTemplate(page.bare ? layoutBare : layout, {
       TITLE: page.title,
       DESCRIPTION: page.description,
       HEAD_EXTRA: page.headExtra || '',
