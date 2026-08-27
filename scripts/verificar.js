@@ -48,19 +48,30 @@ const geradosAlterados = () =>
     .filter((d) => ehGerado(d.arquivo) && d.linhas > 0);
 
 /* 1. Alguém editou um arquivo gerado à mão? ---------------------------- */
-// Esta checagem vem ANTES do build de propósito: o build regeneraria esses
-// arquivos a partir de src/ e apagaria a edição sem avisar.
+// Um arquivo gerado com alteração pendente pode significar duas coisas bem
+// diferentes: alguém o editou à mão (a edição vai se perder no próximo build)
+// ou alguém mexeu em src/ e regenerou, o que é trabalho legítimo. O que separa
+// os dois casos é se a fonte também tem alteração pendente.
 const editadosAMao = geradosAlterados();
-if (editadosAMao.length) {
+const fontesAlteradas = git('--no-pager', 'diff', '--name-only')
+  .split('\n')
+  .filter((f) => f && !ehGerado(f));
+
+if (!editadosAMao.length) {
+  ok('nenhum arquivo gerado foi editado à mão');
+} else if (fontesAlteradas.length) {
+  ok(
+    `${editadosAMao.length} arquivo(s) gerado(s) alterados junto com ` +
+    `${fontesAlteradas.length} fonte(s) — trabalho em andamento`
+  );
+} else {
   falha(`${editadosAMao.length} arquivo(s) gerado(s) foram editados à mão`);
-  editadosAMao.forEach((d) => console.log(`    ${d.arquivo} (${d.linhas} linha(s))`));
+  editadosAMao.slice(0, 12).forEach((d) => console.log(`    ${d.arquivo} (${d.linhas} linha(s))`));
   console.log(
     '\n  Estes arquivos são saída do build.js e serão sobrescritos no próximo\n' +
     '  `node build.js`. Leve a alteração para o arquivo correspondente em\n' +
     '  src/ antes de rodar o build, ou ela se perde.\n'
   );
-} else {
-  ok('nenhum arquivo gerado foi editado à mão');
 }
 
 /* 2. O build reproduz o que está versionado? --------------------------- */
