@@ -5,7 +5,8 @@
   "description": "Site institucional do Dr. Bruno Kersten — Oncologia Clínica (Araçatuba/SP)",
   "scripts": {
     "build": "node build.js",
-    "start": "npx http-server -p 8080 -c-1 ."
+    "start": "npx http-server -p 8080 -c-1 .",
+    "verificar": "node scripts/verificar.js"
   },
   "license": "UNLICENSED"
 }
