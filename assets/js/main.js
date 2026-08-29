@@ -182,6 +182,67 @@
   }
 
   /* ----------------------------------------------------------------------
+     5. Máscara dos campos de telefone
+
+     Formata enquanto a pessoa digita: (18) 99999-9999 para celular e
+     (18) 3621-0000 para fixo. O formato só se decide no 11º dígito, então
+     um número de 10 fica com quatro dígitos antes do hífen.
+     ---------------------------------------------------------------------- */
+  function formatarTelefone(digitos) {
+    // Número brasileiro tem 10 ou 11 dígitos. Com 12 ou 13 e começando em 55,
+    // o que veio junto só pode ser o código do país — normalmente de quem
+    // colou "+55 18 99999-8888". Sem isso o 55 viraria o DDD.
+    if (digitos.indexOf('55') === 0 && (digitos.length === 12 || digitos.length === 13)) {
+      digitos = digitos.slice(2);
+    }
+    const d = digitos.slice(0, 11);
+    if (!d.length) return '';
+    if (d.length <= 2) return '(' + d;
+    const ddd = d.slice(0, 2);
+    const resto = d.slice(2);
+    if (resto.length <= 4) return '(' + ddd + ') ' + resto;
+    const corte = d.length > 10 ? 5 : 4;
+    return '(' + ddd + ') ' + resto.slice(0, corte) + '-' + resto.slice(corte);
+  }
+
+  $$('input[type="tel"]').forEach(function (campo) {
+    // Conta dígitos, e não caracteres, para o cursor não pular quando os
+    // parênteses e o hífen entram ou saem.
+    const digitosAte = (texto, pos) => (texto.slice(0, pos).match(/\d/g) || []).length;
+    const posDepoisDe = (texto, quantos) => {
+      if (quantos <= 0) return 0;
+      let vistos = 0;
+      for (let i = 0; i < texto.length; i++) {
+        if (/\d/.test(texto[i])) {
+          vistos += 1;
+          if (vistos === quantos) return i + 1;
+        }
+      }
+      return texto.length;
+    };
+
+    let anterior = campo.value.replace(/\D/g, '');
+
+    campo.addEventListener('input', function (evento) {
+      const apagando = !!evento.inputType && evento.inputType.indexOf('delete') === 0;
+      let digitos = campo.value.replace(/\D/g, '');
+
+      // Apagar em cima de um separador não mudaria dígito nenhum, e a tecla
+      // pareceria travada. Nesse caso, remove o dígito anterior a ele.
+      if (apagando && digitos === anterior) digitos = digitos.slice(0, -1);
+      anterior = digitos;
+
+      const alvo = digitosAte(campo.value, campo.selectionStart);
+      const formatado = formatarTelefone(digitos);
+      if (formatado === campo.value) return;
+
+      campo.value = formatado;
+      const p = posDepoisDe(formatado, apagando ? Math.min(alvo, digitos.length) : alvo);
+      try { campo.setSelectionRange(p, p); } catch (e) { /* alguns navegadores recusam em type=tel */ }
+    });
+  });
+
+  /* ----------------------------------------------------------------------
      5a. Formulários de contato — abrem o WhatsApp
 
      O site é estático e não tem servidor para receber envios. Em vez de
