@@ -39,6 +39,17 @@
 </button>
 
 <script src="assets/js/search-index.js" defer></script>
+<script>
+  // Convites e recuperações de senha do Netlify Identity chegam na raiz do
+  // site, com o token no endereço. Sem isto o link do e-mail não leva a
+  // lugar nenhum. Só roda quando o token existe.
+  (function () {
+    var h = window.location.hash;
+    if (h.indexOf('invite_token=') > -1 || h.indexOf('recovery_token=') > -1) {
+      window.location.replace('/admin/' + h);
+    }
+  })();
+</script>
 <script src="assets/js/main.js" defer></script>
 </body>
 </html>

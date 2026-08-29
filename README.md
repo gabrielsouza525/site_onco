@@ -129,29 +129,36 @@ front-matter — HTML cru e módulo JavaScript não entram. Para abrir esse
 conteúdo ao painel seria preciso convertê-lo para markdown e ensinar o
 `build.js` a renderizá-lo.
 
-### Autenticação — o que falta para publicar
+### Como entrar no painel
 
-O backend `github` precisa de um servidor de OAuth para trocar o código de
-login por um token de acesso, e o **GitHub Pages não tem servidor**. Enquanto
-isso não for resolvido, o painel funciona **apenas na máquina de quem edita**:
+O login é o **Netlify Identity**, e os commits são assinados pelo **Git
+Gateway** — por isso o painel funciona no site publicado, sem servidor próprio
+de autenticação.
+
+Ligar isso é feito uma vez, no painel da Netlify:
+
+1. **Identity → Enable Identity**
+2. **Identity → Services → Git Gateway → Enable**
+3. **Identity → Registration**: deixe em **Invite only**, para ninguém se
+   cadastrar sozinho
+4. **Identity → Invite users**: convide quem vai editar
+
+Quem for convidado recebe um e-mail, define a senha e entra em `/admin/`.
+
+O link do convite chega na raiz do site com um token no endereço; o
+`src/layout.html` tem um trecho que reconhece esse token e leva a pessoa ao
+painel. Sem ele o e-mail de convite não levaria a lugar nenhum.
+
+### Editar na própria máquina
+
+Sem passar pela Netlify:
 
 ```bash
 npx decap-server      # em um terminal
 npm start             # em outro
 ```
 
-Depois abra <http://localhost:8080/admin/>.
-
-Para o painel funcionar no site publicado, há dois caminhos:
-
-1. **Publicar o site na Netlify ou na Cloudflare Pages** em vez do GitHub
-   Pages. As duas oferecem autenticação e funções de servidor no plano
-   gratuito, e o Decap passa a funcionar direto. Como o site é estático, a
-   migração é simples.
-2. **Manter o GitHub Pages e subir um proxy de OAuth** próprio (uma função na
-   Cloudflare ou na Vercel), apontando `base_url` no `admin/config.yml` para
-   ele. Evite proxies públicos de terceiros: eles recebem permissão de escrita
-   no repositório.
+E abrir <http://localhost:8080/admin/>.
 
 ## Formulários de contato
 
