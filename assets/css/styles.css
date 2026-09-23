@@ -2075,3 +2075,248 @@ button { cursor: pointer; }
   color: var(--muted);
 }
 .nav-admin-mobile:hover { color: var(--blue-700); }
+
+/* --------------------------------------------------------------------------
+   20. Painel administrativo
+
+   Continua o fundo escuro da tela de acesso: quem está aqui está nos
+   bastidores, e isso nunca deve ser confundido com o site público.
+   Uma coluna só, sem grade de cartões. O que dá caráter à página é a lista
+   do meio, que mostra o valor que o site publica hoje em cada campo — abrir
+   o painel já responde "está certo?" sem precisar clicar em nada.
+   O âmbar aparece apenas onde falta alguma coisa: painel calmo, nada a fazer.
+   -------------------------------------------------------------------------- */
+.page-painel {
+  background: #0d1420;
+  color: #c6d4e4;
+}
+
+/* Cada estado ocupa a tela inteira; o JS troca o data-estado do contêiner. */
+.painel-shell > [data-quando] { display: none; }
+.painel-shell[data-estado="carregando"] > [data-quando="carregando"],
+.painel-shell[data-estado="bloqueado"] > [data-quando="bloqueado"],
+.painel-shell[data-estado="indisponivel"] > [data-quando="indisponivel"],
+.painel-shell[data-estado="aberto"] > [data-quando="aberto"] { display: block; }
+
+/* Barra ----------------------------------------------------------------- */
+.painel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 24px;
+  border-bottom: 1px solid #1d2b3e;
+}
+.painel-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 15px;
+}
+.painel-logo img { width: 30px; height: 30px; }
+
+.painel-bar-acoes {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 13.5px;
+}
+.painel-quem { color: #8ba0bb; }
+.painel-bar-link {
+  color: var(--blue-300);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  transition: color .18s ease;
+}
+.painel-bar-link:hover,
+.painel-bar-link:focus-visible { color: #fff; }
+
+/* Porta: espera, bloqueado, indisponível --------------------------------- */
+.painel-porta {
+  display: grid;
+  place-items: center;
+  padding: 10vh 24px 24px;
+}
+.painel-porta-card {
+  width: 100%;
+  max-width: 400px;
+  background: #16202f;
+  border: 1px solid #24344a;
+  border-radius: 20px;
+  padding: 30px 28px;
+  text-align: center;
+}
+.painel-porta-card h1 {
+  color: #fff;
+  font-size: 22px;
+  margin-bottom: .55em;
+}
+.painel-porta-card p {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #9fb3cc;
+  margin-bottom: 22px;
+}
+.painel-porta-espera { margin: 0; }
+.painel-porta-pe { margin: 20px 0 0; font-size: 13.5px; }
+.painel-porta-pe a { color: var(--blue-300); }
+.painel-porta-pe a:hover { color: #fff; }
+
+/* Painel ----------------------------------------------------------------- */
+.painel {
+  max-width: 660px;
+  margin-inline: auto;
+  padding: 52px 24px 88px;
+}
+.painel h1 {
+  color: #fff;
+  font-size: clamp(26px, 4vw, 33px);
+  margin-bottom: .3em;
+}
+.painel-resumo {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #9fb3cc;
+  margin-bottom: 46px;
+}
+
+.painel-bloco {
+  border-top: 1px solid #1d2b3e;
+  padding-top: 26px;
+  margin-bottom: 44px;
+}
+.painel-bloco h2 {
+  color: #fff;
+  font-size: 17px;
+  margin-bottom: .45em;
+}
+.painel-legenda {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #7f94af;
+  margin-bottom: 0;
+}
+/* O <strong> do site é escuro por padrão; aqui o fundo é escuro também. */
+.painel-numeros {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #9fb3cc;
+  margin-bottom: 8px;
+}
+.painel-numeros strong {
+  font-family: var(--font-head);
+  font-size: 17px;
+  color: #fff;
+}
+
+.painel-bloco--fim p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #9fb3cc;
+  margin-bottom: 0;
+}
+
+/* Lista de valores publicados.
+   O dado vem antes do rótulo na hierarquia visual: aqui o conteúdo é o valor,
+   e o rótulo é só a anotação que diz do que se trata. */
+.painel-lista {
+  list-style: none;
+  margin: 24px 0 26px;
+  padding: 0;
+}
+.painel-linha {
+  border-left: 2px solid #24344a;
+  padding: 11px 0 11px 16px;
+  margin-bottom: 4px;
+}
+.painel-rotulo {
+  display: block;
+  font-size: 12.5px;
+  color: #7f94af;
+  margin-bottom: 3px;
+}
+.painel-valor {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 16.5px;
+  color: #e7eef7;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.painel-nota {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #7f94af;
+  margin: 5px 0 0;
+}
+
+/* Pendências: o âmbar é o único acento da página. */
+.painel-linha[data-estado="falta"] { border-left-color: #ffb570; }
+.painel-linha[data-estado="falta"] .painel-valor { color: #ffb570; }
+.painel-linha[data-estado="exemplo"] { border-left-color: #ffb570; }
+.painel-linha[data-estado="vazio"] .painel-valor {
+  color: #64788f;
+  font-weight: 500;
+}
+.painel-marca {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 181, 112, .14);
+  color: #ffb570;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  vertical-align: 2px;
+}
+
+/* Ação ------------------------------------------------------------------- */
+.painel-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue-300);
+  color: var(--blue-900);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 14.5px;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.painel-acao:hover,
+.painel-acao:focus-visible { background: #a9cdf0; color: var(--blue-900); }
+
+/* O painel aparece de uma vez quando o acesso é confirmado. É o único
+   movimento da página. */
+.painel-shell[data-estado="aberto"] > [data-quando="aberto"] {
+  animation: painel-entra .28s ease both;
+}
+@keyframes painel-entra {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .painel-shell[data-estado="aberto"] > [data-quando="aberto"] { animation: none; }
+}
+
+@media (max-width: 560px) {
+  .painel-bar { padding: 12px 18px; }
+  .painel-bar-acoes { gap: 14px; }
+  .painel { padding: 36px 18px 64px; }
+  .painel-resumo { margin-bottom: 34px; }
+  .painel-porta { padding: 7vh 18px 24px; }
+  .painel-porta-card { padding: 26px 20px; }
+}

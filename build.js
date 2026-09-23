@@ -123,6 +123,18 @@ const PAGES = [
     section: 'Área administrativa',
   },
   {
+    slug: 'painel',
+    nav: null,
+    bare: true,
+    title: 'Painel — Área administrativa | Dr. Bruno Kersten',
+    description: 'Painel de administração do site.',
+    indexable: false,
+    section: 'Área administrativa',
+    // Quem autentica é o Netlify Identity. O widget precisa estar carregado
+    // antes do main.js, que só decide o que a página mostra.
+    headExtra: '  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>',
+  },
+  {
     slug: 'busca',
     nav: null,
     title: 'Busca no site | Dr. Bruno Kersten',
@@ -429,6 +441,83 @@ for (const c of CANCERS) {
     content: paginaCancer(c),
   });
 }
+
+/* ------------------------------------------------------------------------
+ * PAINEL ADMINISTRATIVO
+ *
+ * As linhas do painel saem dos mesmos dados que alimentam o rodapé e a página
+ * de contato, para que a tela mostre exatamente o que está publicado. Um campo
+ * vazio, ou ainda com o texto de exemplo, aparece marcado — é assim que o
+ * painel vira lista de pendências sem que ninguém precise manter uma à parte.
+ * --------------------------------------------------------------------- */
+
+/** Reconhece o texto de exemplo deixado no lugar do dado real. */
+const ehExemplo = (v) => /\[|0{4}/.test(String(v));
+
+/* Os três primeiros são indispensáveis: sem eles o paciente não consegue
+   chegar ao consultório. As redes sociais podem ficar de fora sem prejuízo. */
+const CAMPOS_PAINEL = [
+  { rotulo: 'Telefone', chave: 'telefone' },
+  {
+    rotulo: 'WhatsApp',
+    chave: 'whatsapp',
+    nota: 'Sem ele, os formulários de contato avisam que o WhatsApp não está configurado.',
+  },
+  { rotulo: 'Endereço', chave: 'endereco' },
+  { rotulo: 'Cidade', chave: 'cidade' },
+  { rotulo: 'Horário de atendimento', chave: 'horario' },
+  { rotulo: 'Instagram', chave: 'instagram', opcional: true },
+  { rotulo: 'Facebook', chave: 'facebook', opcional: true },
+  { rotulo: 'LinkedIn', chave: 'linkedin', opcional: true },
+];
+
+/** Classifica um campo em: preenchido, ainda de exemplo, ou em branco. */
+function estadoDoCampo(campo) {
+  const valor = String(SITE[campo.chave] || '').trim();
+  if (!valor) {
+    return campo.opcional
+      ? { estado: 'vazio', texto: 'não usado' }
+      : { estado: 'falta', texto: 'falta preencher' };
+  }
+  if (ehExemplo(valor)) return { estado: 'exemplo', texto: valor };
+  return { estado: 'ok', texto: valor };
+}
+
+function linhasPainel() {
+  return CAMPOS_PAINEL.map((campo) => {
+    const { estado, texto } = estadoDoCampo(campo);
+    const marca =
+      estado === 'exemplo' ? '<span class="painel-marca">ainda é exemplo</span>' : '';
+    const nota =
+      campo.nota && estado !== 'ok'
+        ? `<p class="painel-nota">${esc(campo.nota)}</p>`
+        : '';
+    return `      <li class="painel-linha" data-estado="${estado}">
+        <span class="painel-rotulo">${esc(campo.rotulo)}</span>
+        <span class="painel-valor">${esc(texto)}${marca}</span>
+        ${nota}
+      </li>`;
+  }).join('\n');
+}
+
+/** Uma frase sobre o que falta, já no plural certo. */
+function resumoPainel() {
+  const pendentes = CAMPOS_PAINEL.filter((c) => {
+    const { estado } = estadoDoCampo(c);
+    return estado === 'falta' || estado === 'exemplo';
+  }).length;
+
+  if (pendentes === 0) return 'Todas as informações de contato estão preenchidas.';
+  if (pendentes === 1) return 'Uma informação de contato ainda precisa da sua atenção.';
+  return `${pendentes} informações de contato ainda precisam da sua atenção.`;
+}
+
+/* Contagens: só as páginas que entram no índice de busca contam como
+   publicadas — login, painel, busca e 404 não são conteúdo. */
+TOKENS_SITE.TOTAL_PAGINAS = String(PAGES.filter((p) => p.indexable !== false).length);
+TOKENS_SITE.TOTAL_CANCERES = String(CANCERS.length);
+TOKENS_SITE.PAINEL_LINHAS = linhasPainel();
+TOKENS_SITE.PAINEL_RESUMO = resumoPainel();
 
 /* ------------------------------------------------------------------------ */
 

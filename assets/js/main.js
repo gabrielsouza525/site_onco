@@ -484,12 +484,87 @@
         return;
       }
       dizer(
-        'Dados válidos. Não há área administrativa para abrir ainda, e nenhuma ' +
-        'informação foi enviada ou guardada.',
+        'Dados válidos — e nada foi enviado ou guardado. O painel de verdade ' +
+        'fica em painel.html, com acesso por convite.',
         'ok'
       );
       senha.value = '';
     });
+  }
+
+  /* ----------------------------------------------------------------------
+     8b. Painel administrativo
+
+     Quem autentica é o Netlify Identity: ele guarda a sessão e esta página só
+     decide o que mostrar. Esconder conteúdo no navegador não é proteção — o
+     HTML é público. Por isso o painel só exibe o que já está publicado no
+     site (telefone, endereço, redes sociais). Nada sigiloso entra aqui.
+     ---------------------------------------------------------------------- */
+  const painel = $('#painelShell');
+  if (painel) {
+    const identity = window.netlifyIdentity;
+    const quem = $('#painelQuem');
+    const sair = $('#painelSair');
+    const entrar = $('#painelEntrar');
+
+    const estado = (valor) => painel.setAttribute('data-estado', valor);
+
+    const mostrar = (usuario) => {
+      if (usuario) {
+        if (quem) {
+          quem.textContent = usuario.email || 'conectado';
+          quem.hidden = false;
+        }
+        if (sair) sair.hidden = false;
+        estado('aberto');
+      } else {
+        if (quem) quem.hidden = true;
+        if (sair) sair.hidden = true;
+        estado('bloqueado');
+      }
+    };
+
+    /* O Identity fala com /.netlify/identity, que só existe no site
+       hospedado na Netlify. Em outro endereço o login falharia com um erro
+       do widget; é mais honesto dizer de frente que ali não abre. */
+    const host = window.location.hostname;
+    const temLogin =
+      !!identity &&
+      window.location.protocol !== 'file:' &&
+      !/\.github\.io$/.test(host);
+
+    if (!temLogin) {
+      estado('indisponivel');
+    } else {
+      identity.on('init', mostrar);
+      identity.on('login', function (usuario) {
+        identity.close();
+        mostrar(usuario);
+      });
+      identity.on('logout', function () { mostrar(null); });
+      identity.on('error', function () { estado('indisponivel'); });
+
+      // O widget pode já ter iniciado antes deste script rodar; nesse caso o
+      // evento 'init' não chega mais e a sessão vem por aqui.
+      const jaConectado = typeof identity.currentUser === 'function'
+        ? identity.currentUser()
+        : null;
+      if (jaConectado) mostrar(jaConectado);
+
+      if (entrar) {
+        entrar.addEventListener('click', function () { identity.open('login'); });
+      }
+      if (sair) {
+        sair.addEventListener('click', function () { identity.logout(); });
+      }
+
+      // Se o serviço não responder, a tela não fica presa em "verificando".
+      window.setTimeout(function () {
+        if (painel.getAttribute('data-estado') === 'carregando') {
+          estado('indisponivel');
+        }
+      }, 6000);
+    }
   }
 
   /* ----------------------------------------------------------------------

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel — Área administrativa | Dr. Bruno Kersten</title>
+  <meta name="description" content="Painel de administração do site.">
+  <meta name="robots" content="noindex">
+  <meta name="author" content="Dr. Bruno Kersten">
+  <meta name="theme-color" content="#08306a">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" sizes="180x180">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body class="page-painel">
+
+<div class="painel-shell" id="painelShell" data-estado="carregando">
+
+  <header class="painel-bar">
+    <a class="painel-logo" href="index.html">
+      <img src="assets/img/logo.svg" alt="" width="30" height="30">
+      <span>Área administrativa</span>
+    </a>
+    <div class="painel-bar-acoes">
+      <span class="painel-quem" id="painelQuem" hidden></span>
+      <a class="painel-bar-link" href="index.html">Ver o site</a>
+      <button type="button" class="painel-bar-link painel-sair" id="painelSair" hidden>Sair</button>
+    </div>
+  </header>
+
+  <!-- Enquanto o Netlify Identity responde ------------------------------- -->
+  <section class="painel-porta" data-quando="carregando">
+    <div class="painel-porta-card">
+      <p class="painel-porta-espera">Verificando o acesso.</p>
+    </div>
+  </section>
+
+  <!-- Sem sessão -------------------------------------------------------- -->
+  <section class="painel-porta" data-quando="bloqueado">
+    <div class="painel-porta-card">
+      <h1>Entrar no painel</h1>
+      <p>O acesso é por convite. Use o e-mail que recebeu o convite e a senha
+        que você mesmo definiu.</p>
+      <button type="button" class="painel-acao" id="painelEntrar">Entrar</button>
+      <p class="painel-porta-pe"><a href="index.html">Voltar ao site</a></p>
+    </div>
+  </section>
+
+  <!-- O serviço de login não existe neste endereço ----------------------- -->
+  <section class="painel-porta" data-quando="indisponivel">
+    <div class="painel-porta-card">
+      <h1>O painel não abre aqui</h1>
+      <p>O login roda junto com o site publicado. Neste endereço ele não
+        existe, então não há o que abrir.</p>
+      <p class="painel-porta-pe"><a href="index.html">Voltar ao site</a></p>
+    </div>
+  </section>
+
+  <!-- Painel ------------------------------------------------------------ -->
+  <main class="painel" data-quando="aberto">
+    <h1>Painel</h1>
+    <p class="painel-resumo">3 informações de contato ainda precisam da sua atenção.</p>
+
+    <section class="painel-bloco">
+      <h2>O que o site mostra hoje</h2>
+      <p class="painel-legenda">
+        Estes valores aparecem no rodapé de todas as páginas e na página de
+        contato. Mudar aqui muda em todas de uma vez.
+      </p>
+
+      <ul class="painel-lista">
+      <li class="painel-linha" data-estado="exemplo">
+        <span class="painel-rotulo">Telefone</span>
+        <span class="painel-valor">(18) 0000-0000<span class="painel-marca">ainda é exemplo</span></span>
+        
+      </li>
+      <li class="painel-linha" data-estado="falta">
+        <span class="painel-rotulo">WhatsApp</span>
+        <span class="painel-valor">falta preencher</span>
+        <p class="painel-nota">Sem ele, os formulários de contato avisam que o WhatsApp não está configurado.</p>
+      </li>
+      <li class="painel-linha" data-estado="exemplo">
+        <span class="painel-rotulo">Endereço</span>
+        <span class="painel-valor">[Endereço completo a inserir]<span class="painel-marca">ainda é exemplo</span></span>
+        
+      </li>
+      <li class="painel-linha" data-estado="ok">
+        <span class="painel-rotulo">Cidade</span>
+        <span class="painel-valor">Araçatuba — SP</span>
+        
+      </li>
+      <li class="painel-linha" data-estado="ok">
+        <span class="painel-rotulo">Horário de atendimento</span>
+        <span class="painel-valor">Segunda a sexta, 8h às 18h</span>
+        
+      </li>
+      <li class="painel-linha" data-estado="vazio">
+        <span class="painel-rotulo">Instagram</span>
+        <span class="painel-valor">não usado</span>
+        
+      </li>
+      <li class="painel-linha" data-estado="vazio">
+        <span class="painel-rotulo">Facebook</span>
+        <span class="painel-valor">não usado</span>
+        
+      </li>
+      <li class="painel-linha" data-estado="vazio">
+        <span class="painel-rotulo">LinkedIn</span>
+        <span class="painel-valor">não usado</span>
+        
+      </li>
+      </ul>
+
+      <a class="painel-acao" href="admin/">Editar estas informações</a>
+    </section>
+
+    <section class="painel-bloco">
+      <h2>O site</h2>
+      <p class="painel-numeros">
+        <strong>63</strong> páginas publicadas, sendo
+        <strong>55</strong> sobre tipos de câncer.
+      </p>
+      <p class="painel-legenda">
+        As páginas são geradas de novo a cada publicação, e a busca interna
+        acompanha sozinha.
+      </p>
+    </section>
+
+    <section class="painel-bloco painel-bloco--fim">
+      <h2>O que não se edita por aqui</h2>
+      <p>
+        O texto das páginas e o conteúdo clínico dos tipos de câncer ficam no
+        código do site. Para alterar qualquer um dos dois, fale com quem cuida
+        da parte técnica.
+      </p>
+    </section>
+  </main>
+
+</div>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
