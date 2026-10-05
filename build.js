@@ -121,6 +121,7 @@ const PAGES = [
     description: 'Acesso restrito à equipe responsável pelo conteúdo do site.',
     indexable: false,
     section: 'Área administrativa',
+    headExtra: '  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>',
   },
   {
     slug: 'painel',
@@ -130,8 +131,8 @@ const PAGES = [
     description: 'Painel de administração do site.',
     indexable: false,
     section: 'Área administrativa',
-    // Quem autentica é o Netlify Identity. O widget precisa estar carregado
-    // antes do main.js, que só decide o que a página mostra.
+    // Quem autentica é o Netlify Identity. O widget carrega antes do main.js,
+    // que só decide o que a página mostra.
     headExtra: '  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>',
   },
   {
@@ -445,79 +446,81 @@ for (const c of CANCERS) {
 /* ------------------------------------------------------------------------
  * PAINEL ADMINISTRATIVO
  *
- * As linhas do painel saem dos mesmos dados que alimentam o rodapé e a página
- * de contato, para que a tela mostre exatamente o que está publicado. Um campo
- * vazio, ou ainda com o texto de exemplo, aparece marcado — é assim que o
- * painel vira lista de pendências sem que ninguém precise manter uma à parte.
+ * O painel mostra e edita os dados de src/data/site.json. Daqui saem duas
+ * coisas: o formulário de edição, já montado no HTML para que a máscara de
+ * telefone o encontre ao carregar, e um JSON com os campos e os valores
+ * publicados neste build. O main.js desenha a lista a partir desse JSON e,
+ * depois do login, compara com o que está no repositório.
  * --------------------------------------------------------------------- */
 
-/** Reconhece o texto de exemplo deixado no lugar do dado real. */
-const ehExemplo = (v) => /\[|0{4}/.test(String(v));
-
-/* Os três primeiros são indispensáveis: sem eles o paciente não consegue
-   chegar ao consultório. As redes sociais podem ficar de fora sem prejuízo. */
+/* `obrigatorio`: sem ele o paciente não chega ao consultório, então o
+   painel não deixa salvar em branco. `opcional`: em branco é uma escolha,
+   e a lista mostra sem alarde. O WhatsApp fica no meio — pode ficar vazio,
+   mas a lista avisa, porque os formulários de contato dependem dele. */
 const CAMPOS_PAINEL = [
-  { rotulo: 'Telefone', chave: 'telefone' },
   {
-    rotulo: 'WhatsApp',
-    chave: 'whatsapp',
+    chave: 'telefone', rotulo: 'Telefone', tipo: 'tel', obrigatorio: true,
+    dica: 'Como aparece no site. Pode ser fixo ou celular.',
+  },
+  {
+    chave: 'whatsapp', rotulo: 'WhatsApp', tipo: 'whatsapp',
+    dica: 'Celular com DDD. É para ele que vão as mensagens dos formulários de contato.',
     nota: 'Sem ele, os formulários de contato avisam que o WhatsApp não está configurado.',
   },
-  { rotulo: 'Endereço', chave: 'endereco' },
-  { rotulo: 'Cidade', chave: 'cidade' },
-  { rotulo: 'Horário de atendimento', chave: 'horario' },
-  { rotulo: 'Instagram', chave: 'instagram', opcional: true },
-  { rotulo: 'Facebook', chave: 'facebook', opcional: true },
-  { rotulo: 'LinkedIn', chave: 'linkedin', opcional: true },
+  {
+    chave: 'endereco', rotulo: 'Endereço', tipo: 'texto', obrigatorio: true,
+    dica: 'Rua, número, bairro e CEP.',
+  },
+  { chave: 'cidade', rotulo: 'Cidade', tipo: 'texto', obrigatorio: true },
+  { chave: 'horario', rotulo: 'Horário de atendimento', tipo: 'texto', obrigatorio: true },
+  {
+    chave: 'instagram', rotulo: 'Instagram', tipo: 'link', opcional: true,
+    exemplo: 'https://www.instagram.com/perfil',
+  },
+  {
+    chave: 'facebook', rotulo: 'Facebook', tipo: 'link', opcional: true,
+    exemplo: 'https://www.facebook.com/pagina',
+  },
+  {
+    chave: 'linkedin', rotulo: 'LinkedIn', tipo: 'link', opcional: true,
+    exemplo: 'https://www.linkedin.com/in/perfil',
+  },
 ];
 
-/** Classifica um campo em: preenchido, ainda de exemplo, ou em branco. */
-function estadoDoCampo(campo) {
-  const valor = String(SITE[campo.chave] || '').trim();
-  if (!valor) {
-    return campo.opcional
-      ? { estado: 'vazio', texto: 'não usado' }
-      : { estado: 'falta', texto: 'falta preencher' };
-  }
-  if (ehExemplo(valor)) return { estado: 'exemplo', texto: valor };
-  return { estado: 'ok', texto: valor };
-}
-
-function linhasPainel() {
-  return CAMPOS_PAINEL.map((campo) => {
-    const { estado, texto } = estadoDoCampo(campo);
-    const marca =
-      estado === 'exemplo' ? '<span class="painel-marca">ainda é exemplo</span>' : '';
-    const nota =
-      campo.nota && estado !== 'ok'
-        ? `<p class="painel-nota">${esc(campo.nota)}</p>`
-        : '';
-    return `      <li class="painel-linha" data-estado="${estado}">
-        <span class="painel-rotulo">${esc(campo.rotulo)}</span>
-        <span class="painel-valor">${esc(texto)}${marca}</span>
-        ${nota}
-      </li>`;
+function formularioPainel() {
+  return CAMPOS_PAINEL.map((c) => {
+    const id = `campo-${c.chave}`;
+    const tipo = c.tipo === 'link' ? 'url' : (c.tipo === 'texto' ? 'text' : 'tel');
+    const extras = [
+      tipo === 'tel' ? 'inputmode="tel"' : '',
+      c.exemplo ? `placeholder="${esc(c.exemplo)}"` : '',
+      c.dica ? `aria-describedby="${id}-dica"` : '',
+      c.obrigatorio ? 'required' : '',
+    ].filter(Boolean).join(' ');
+    const dica = c.dica ? `\n          <p class="painel-dica" id="${id}-dica">${esc(c.dica)}</p>` : '';
+    const sufixo = c.opcional ? ' <span class="painel-opcional">opcional</span>' : '';
+    return `        <div class="painel-campo" data-campo="${c.chave}">
+          <label for="${id}">${esc(c.rotulo)}${sufixo}</label>
+          <input id="${id}" name="${c.chave}" type="${tipo}" autocomplete="off" ${extras}>${dica}
+        </div>`;
   }).join('\n');
 }
 
-/** Uma frase sobre o que falta, já no plural certo. */
-function resumoPainel() {
-  const pendentes = CAMPOS_PAINEL.filter((c) => {
-    const { estado } = estadoDoCampo(c);
-    return estado === 'falta' || estado === 'exemplo';
-  }).length;
-
-  if (pendentes === 0) return 'Todas as informações de contato estão preenchidas.';
-  if (pendentes === 1) return 'Uma informação de contato ainda precisa da sua atenção.';
-  return `${pendentes} informações de contato ainda precisam da sua atenção.`;
+/* O JSON vai dentro de <script>; trocar o "<" impede que um valor feche a
+   tag antes da hora. */
+function dadosPainel() {
+  const campos = CAMPOS_PAINEL.map(({ chave, rotulo, tipo, obrigatorio, opcional, nota }) =>
+    ({ chave, rotulo, tipo, obrigatorio: !!obrigatorio, opcional: !!opcional, nota: nota || '' }));
+  return JSON.stringify({ arquivo: 'src/data/site.json', ramo: 'main', campos, publicado: SITE })
+    .replace(/</g, '\u003c');
 }
 
 /* Contagens: só as páginas que entram no índice de busca contam como
    publicadas — login, painel, busca e 404 não são conteúdo. */
 TOKENS_SITE.TOTAL_PAGINAS = String(PAGES.filter((p) => p.indexable !== false).length);
 TOKENS_SITE.TOTAL_CANCERES = String(CANCERS.length);
-TOKENS_SITE.PAINEL_LINHAS = linhasPainel();
-TOKENS_SITE.PAINEL_RESUMO = resumoPainel();
+TOKENS_SITE.PAINEL_FORMULARIO = formularioPainel();
+TOKENS_SITE.PAINEL_DADOS = dadosPainel();
 
 /* ------------------------------------------------------------------------ */
 

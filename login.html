@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
-
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body class="page-login">
 
@@ -86,8 +86,8 @@
         <div class="field">
           <label for="loginSenha">Senha</label>
           <div class="input-with-action">
-            <input type="password" id="loginSenha" name="senha" placeholder="Mínimo 6 caracteres"
-                   autocomplete="current-password" minlength="6" required>
+            <input type="password" id="loginSenha" name="senha" placeholder="Sua senha"
+                   autocomplete="current-password" required>
             <button type="button" class="reveal" id="revelarSenha"
                     aria-label="Mostrar senha" aria-pressed="false">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -100,29 +100,28 @@
             <input type="checkbox" id="manterConectado" name="manter" checked>
             <span>Manter conectado</span>
           </label>
-          <a href="contato.html">Esqueci minha senha</a>
+          <button type="button" class="auth-link" id="esqueciSenha">Esqueci minha senha</button>
         </div>
 
-        <button type="submit" class="btn btn--primary btn--block auth-submit">
+        <button type="submit" class="btn btn--primary btn--block auth-submit" id="loginEntrar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-          Entrar
+          <span>Entrar</span>
         </button>
 
         <p class="auth-feedback" id="loginFeedback" role="status" hidden></p>
       </form>
 
       <div class="auth-note">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.01"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>
         <p>
-          <strong>Esta tela é um desenho, e não autentica ninguém.</strong> O login de
-          verdade fica em <a href="painel.html">painel.html</a>, onde o acesso é por
-          convite. Não digite aqui uma senha que você use em outro lugar.
+          O acesso é só por convite. Se você recebeu o convite e ainda não criou
+          sua senha, abra o link que chegou no seu e-mail.
         </p>
       </div>
     </div>
 
     <p class="auth-footnote">
-      <a href="painel.html">Ir para o painel</a> &nbsp;·&nbsp; <a href="index.html">Voltar ao site</a>
+      <a href="index.html">Voltar ao site</a>
     </p>
   </section>
 </main>

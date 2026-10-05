@@ -30,25 +30,15 @@
     <div class="painel-bar-acoes">
       <span class="painel-quem" id="painelQuem" hidden></span>
       <a class="painel-bar-link" href="index.html">Ver o site</a>
-      <button type="button" class="painel-bar-link painel-sair" id="painelSair" hidden>Sair</button>
+      <button type="button" class="painel-bar-link" id="painelSair" hidden>Sair</button>
     </div>
   </header>
 
-  <!-- Enquanto o Netlify Identity responde ------------------------------- -->
+  <!-- Enquanto o Netlify Identity responde — e enquanto a janela de convite
+       ou de nova senha estiver aberta por cima. -->
   <section class="painel-porta" data-quando="carregando">
     <div class="painel-porta-card">
       <p class="painel-porta-espera">Verificando o acesso.</p>
-    </div>
-  </section>
-
-  <!-- Sem sessão -------------------------------------------------------- -->
-  <section class="painel-porta" data-quando="bloqueado">
-    <div class="painel-porta-card">
-      <h1>Entrar no painel</h1>
-      <p>O acesso é por convite. Use o e-mail que recebeu o convite e a senha
-        que você mesmo definiu.</p>
-      <button type="button" class="painel-acao" id="painelEntrar">Entrar</button>
-      <p class="painel-porta-pe"><a href="index.html">Voltar ao site</a></p>
     </div>
   </section>
 
@@ -56,8 +46,8 @@
   <section class="painel-porta" data-quando="indisponivel">
     <div class="painel-porta-card">
       <h1>O painel não abre aqui</h1>
-      <p>O login roda junto com o site publicado. Neste endereço ele não
-        existe, então não há o que abrir.</p>
+      <p id="painelIndisponivel">O login roda junto com o site publicado na Netlify.
+        Neste endereço ele não existe, então não há o que abrir.</p>
       <p class="painel-porta-pe"><a href="index.html">Voltar ao site</a></p>
     </div>
   </section>
@@ -65,59 +55,64 @@
   <!-- Painel ------------------------------------------------------------ -->
   <main class="painel" data-quando="aberto">
     <h1>Painel</h1>
-    <p class="painel-resumo">3 informações de contato ainda precisam da sua atenção.</p>
+    <p class="painel-resumo" id="painelResumo"></p>
 
-    <section class="painel-bloco">
-      <h2>O que o site mostra hoje</h2>
+    <section class="painel-bloco" aria-labelledby="painelContatoTitulo">
+      <h2 id="painelContatoTitulo">O que o site mostra hoje</h2>
       <p class="painel-legenda">
         Estes valores aparecem no rodapé de todas as páginas e na página de
         contato. Mudar aqui muda em todas de uma vez.
       </p>
 
-      <ul class="painel-lista">
-      <li class="painel-linha" data-estado="exemplo">
-        <span class="painel-rotulo">Telefone</span>
-        <span class="painel-valor">(18) 0000-0000<span class="painel-marca">ainda é exemplo</span></span>
-        
-      </li>
-      <li class="painel-linha" data-estado="falta">
-        <span class="painel-rotulo">WhatsApp</span>
-        <span class="painel-valor">falta preencher</span>
-        <p class="painel-nota">Sem ele, os formulários de contato avisam que o WhatsApp não está configurado.</p>
-      </li>
-      <li class="painel-linha" data-estado="exemplo">
-        <span class="painel-rotulo">Endereço</span>
-        <span class="painel-valor">[Endereço completo a inserir]<span class="painel-marca">ainda é exemplo</span></span>
-        
-      </li>
-      <li class="painel-linha" data-estado="ok">
-        <span class="painel-rotulo">Cidade</span>
-        <span class="painel-valor">Araçatuba — SP</span>
-        
-      </li>
-      <li class="painel-linha" data-estado="ok">
-        <span class="painel-rotulo">Horário de atendimento</span>
-        <span class="painel-valor">Segunda a sexta, 8h às 18h</span>
-        
-      </li>
-      <li class="painel-linha" data-estado="vazio">
-        <span class="painel-rotulo">Instagram</span>
-        <span class="painel-valor">não usado</span>
-        
-      </li>
-      <li class="painel-linha" data-estado="vazio">
-        <span class="painel-rotulo">Facebook</span>
-        <span class="painel-valor">não usado</span>
-        
-      </li>
-      <li class="painel-linha" data-estado="vazio">
-        <span class="painel-rotulo">LinkedIn</span>
-        <span class="painel-valor">não usado</span>
-        
-      </li>
-      </ul>
+      <p class="painel-aviso" id="painelAviso" role="status" hidden></p>
 
-      <a class="painel-acao" href="admin/">Editar estas informações</a>
+      <div id="painelLeitura">
+        <ul class="painel-lista" id="painelLista"></ul>
+        <button type="button" class="painel-acao" id="painelEditar">Editar estas informações</button>
+      </div>
+
+      <form class="painel-form" id="painelForm" novalidate hidden>
+        <div class="painel-campo" data-campo="telefone">
+          <label for="campo-telefone">Telefone</label>
+          <input id="campo-telefone" name="telefone" type="tel" autocomplete="off" inputmode="tel" aria-describedby="campo-telefone-dica" required>
+          <p class="painel-dica" id="campo-telefone-dica">Como aparece no site. Pode ser fixo ou celular.</p>
+        </div>
+        <div class="painel-campo" data-campo="whatsapp">
+          <label for="campo-whatsapp">WhatsApp</label>
+          <input id="campo-whatsapp" name="whatsapp" type="tel" autocomplete="off" inputmode="tel" aria-describedby="campo-whatsapp-dica">
+          <p class="painel-dica" id="campo-whatsapp-dica">Celular com DDD. É para ele que vão as mensagens dos formulários de contato.</p>
+        </div>
+        <div class="painel-campo" data-campo="endereco">
+          <label for="campo-endereco">Endereço</label>
+          <input id="campo-endereco" name="endereco" type="text" autocomplete="off" aria-describedby="campo-endereco-dica" required>
+          <p class="painel-dica" id="campo-endereco-dica">Rua, número, bairro e CEP.</p>
+        </div>
+        <div class="painel-campo" data-campo="cidade">
+          <label for="campo-cidade">Cidade</label>
+          <input id="campo-cidade" name="cidade" type="text" autocomplete="off" required>
+        </div>
+        <div class="painel-campo" data-campo="horario">
+          <label for="campo-horario">Horário de atendimento</label>
+          <input id="campo-horario" name="horario" type="text" autocomplete="off" required>
+        </div>
+        <div class="painel-campo" data-campo="instagram">
+          <label for="campo-instagram">Instagram <span class="painel-opcional">opcional</span></label>
+          <input id="campo-instagram" name="instagram" type="url" autocomplete="off" placeholder="https://www.instagram.com/perfil">
+        </div>
+        <div class="painel-campo" data-campo="facebook">
+          <label for="campo-facebook">Facebook <span class="painel-opcional">opcional</span></label>
+          <input id="campo-facebook" name="facebook" type="url" autocomplete="off" placeholder="https://www.facebook.com/pagina">
+        </div>
+        <div class="painel-campo" data-campo="linkedin">
+          <label for="campo-linkedin">LinkedIn <span class="painel-opcional">opcional</span></label>
+          <input id="campo-linkedin" name="linkedin" type="url" autocomplete="off" placeholder="https://www.linkedin.com/in/perfil">
+        </div>
+        <p class="painel-erro" id="painelErro" role="alert" hidden></p>
+        <div class="painel-form-acoes">
+          <button type="submit" class="painel-acao" id="painelSalvar">Salvar alterações</button>
+          <button type="button" class="painel-bar-link" id="painelCancelar">Cancelar</button>
+        </div>
+      </form>
     </section>
 
     <section class="painel-bloco">
@@ -127,8 +122,8 @@
         <strong>55</strong> sobre tipos de câncer.
       </p>
       <p class="painel-legenda">
-        As páginas são geradas de novo a cada publicação, e a busca interna
-        acompanha sozinha.
+        As páginas são geradas de novo a cada alteração salva, e a busca
+        interna acompanha sozinha.
       </p>
     </section>
 
@@ -143,6 +138,8 @@
   </main>
 
 </div>
+
+<script type="application/json" id="painelDados">{"arquivo":"src/data/site.json","ramo":"main","campos":[{"chave":"telefone","rotulo":"Telefone","tipo":"tel","obrigatorio":true,"opcional":false,"nota":""},{"chave":"whatsapp","rotulo":"WhatsApp","tipo":"whatsapp","obrigatorio":false,"opcional":false,"nota":"Sem ele, os formulários de contato avisam que o WhatsApp não está configurado."},{"chave":"endereco","rotulo":"Endereço","tipo":"texto","obrigatorio":true,"opcional":false,"nota":""},{"chave":"cidade","rotulo":"Cidade","tipo":"texto","obrigatorio":true,"opcional":false,"nota":""},{"chave":"horario","rotulo":"Horário de atendimento","tipo":"texto","obrigatorio":true,"opcional":false,"nota":""},{"chave":"instagram","rotulo":"Instagram","tipo":"link","obrigatorio":false,"opcional":true,"nota":""},{"chave":"facebook","rotulo":"Facebook","tipo":"link","obrigatorio":false,"opcional":true,"nota":""},{"chave":"linkedin","rotulo":"LinkedIn","tipo":"link","obrigatorio":false,"opcional":true,"nota":""}],"publicado":{"telefone":"(18) 0000-0000","endereco":"[Endereço completo a inserir]","cidade":"Araçatuba — SP","horario":"Segunda a sexta, 8h às 18h","instagram":"","facebook":"","linkedin":"","whatsapp":""}}</script>
 
 <script src="assets/js/main.js" defer></script>
 </body>
