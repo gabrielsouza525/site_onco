@@ -6,6 +6,9 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Editar o site — Dr. Bruno Kersten</title>
   <link rel="icon" href="../assets/img/favicon.ico" sizes="16x16 32x32 48x48">
+  <!-- Netlify Identity: é ele que faz o login do painel. Precisa vir antes
+       do Decap para que o backend git-gateway encontre a sessão. -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
   <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"></script>

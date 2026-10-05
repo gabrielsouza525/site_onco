@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel — Área administrativa | Dr. Bruno Kersten</title>
+  <meta name="description" content="Painel de administração do site.">
+  <meta name="robots" content="noindex">
+  <meta name="author" content="Dr. Bruno Kersten">
+  <meta name="theme-color" content="#08306a">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" sizes="180x180">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body class="page-painel">
+
+<div class="painel-shell" id="painelShell" data-estado="carregando">
+
+  <header class="painel-bar">
+    <a class="painel-logo" href="index.html">
+      <img src="assets/img/logo.svg" alt="" width="30" height="30">
+      <span>Área administrativa</span>
+    </a>
+    <div class="painel-bar-acoes">
+      <span class="painel-quem" id="painelQuem" hidden></span>
+      <a class="painel-bar-link" href="index.html">Ver o site</a>
+      <button type="button" class="painel-bar-link" id="painelSair" hidden>Sair</button>
+    </div>
+  </header>
+
+  <!-- Enquanto o Netlify Identity responde — e enquanto a janela de convite
+       ou de nova senha estiver aberta por cima. -->
+  <section class="painel-porta" data-quando="carregando">
+    <div class="painel-porta-card">
+      <p class="painel-porta-espera">Verificando o acesso.</p>
+    </div>
+  </section>
+
+  <!-- O serviço de login não existe neste endereço ----------------------- -->
+  <section class="painel-porta" data-quando="indisponivel">
+    <div class="painel-porta-card">
+      <h1>O painel não abre aqui</h1>
+      <p id="painelIndisponivel">O login roda junto com o site publicado na Netlify.
+        Neste endereço ele não existe, então não há o que abrir.</p>
+      <p class="painel-porta-pe"><a href="index.html">Voltar ao site</a></p>
+    </div>
+  </section>
+
+  <!-- Painel ------------------------------------------------------------ -->
+  <main class="painel" data-quando="aberto">
+    <h1>Painel</h1>
+    <p class="painel-resumo" id="painelResumo"></p>
+
+    <section class="painel-bloco" aria-labelledby="painelContatoTitulo">
+      <h2 id="painelContatoTitulo">O que o site mostra hoje</h2>
+      <p class="painel-legenda">
+        Estes valores aparecem no rodapé de todas as páginas e na página de
+        contato. Mudar aqui muda em todas de uma vez.
+      </p>
+
+      <p class="painel-aviso" id="painelAviso" role="status" hidden></p>
+
+      <div id="painelLeitura">
+        <ul class="painel-lista" id="painelLista"></ul>
+        <button type="button" class="painel-acao" id="painelEditar">Editar estas informações</button>
+      </div>
+
+      <form class="painel-form" id="painelForm" novalidate hidden>
+        <div class="painel-campo" data-campo="telefone">
+          <label for="campo-telefone">Telefone</label>
+          <input id="campo-telefone" name="telefone" type="tel" autocomplete="off" inputmode="tel" aria-describedby="campo-telefone-dica" required>
+          <p class="painel-dica" id="campo-telefone-dica">Como aparece no site. Pode ser fixo ou celular.</p>
+        </div>
+        <div class="painel-campo" data-campo="whatsapp">
+          <label for="campo-whatsapp">WhatsApp</label>
+          <input id="campo-whatsapp" name="whatsapp" type="tel" autocomplete="off" inputmode="tel" aria-describedby="campo-whatsapp-dica">
+          <p class="painel-dica" id="campo-whatsapp-dica">Celular com DDD. É para ele que vão as mensagens dos formulários de contato.</p>
+        </div>
+        <div class="painel-campo" data-campo="endereco">
+          <label for="campo-endereco">Endereço</label>
+          <input id="campo-endereco" name="endereco" type="text" autocomplete="off" aria-describedby="campo-endereco-dica" required>
+          <p class="painel-dica" id="campo-endereco-dica">Rua, número, bairro e CEP.</p>
+        </div>
+        <div class="painel-campo" data-campo="cidade">
+          <label for="campo-cidade">Cidade</label>
+          <input id="campo-cidade" name="cidade" type="text" autocomplete="off" required>
+        </div>
+        <div class="painel-campo" data-campo="horario">
+          <label for="campo-horario">Horário de atendimento</label>
+          <input id="campo-horario" name="horario" type="text" autocomplete="off" required>
+        </div>
+        <div class="painel-campo" data-campo="instagram">
+          <label for="campo-instagram">Instagram <span class="painel-opcional">opcional</span></label>
+          <input id="campo-instagram" name="instagram" type="url" autocomplete="off" placeholder="https://www.instagram.com/perfil">
+        </div>
+        <div class="painel-campo" data-campo="facebook">
+          <label for="campo-facebook">Facebook <span class="painel-opcional">opcional</span></label>
+          <input id="campo-facebook" name="facebook" type="url" autocomplete="off" placeholder="https://www.facebook.com/pagina">
+        </div>
+        <div class="painel-campo" data-campo="linkedin">
+          <label for="campo-linkedin">LinkedIn <span class="painel-opcional">opcional</span></label>
+          <input id="campo-linkedin" name="linkedin" type="url" autocomplete="off" placeholder="https://www.linkedin.com/in/perfil">
+        </div>
+        <p class="painel-erro" id="painelErro" role="alert" hidden></p>
+        <div class="painel-form-acoes">
+          <button type="submit" class="painel-acao" id="painelSalvar">Salvar alterações</button>
+          <button type="button" class="painel-bar-link" id="painelCancelar">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="painel-bloco">
+      <h2>O site</h2>
+      <p class="painel-numeros">
+        <strong>63</strong> páginas publicadas, sendo
+        <strong>55</strong> sobre tipos de câncer.
+      </p>
+      <p class="painel-legenda">
+        As páginas são geradas de novo a cada alteração salva, e a busca
+        interna acompanha sozinha.
+      </p>
+    </section>
+
+    <section class="painel-bloco painel-bloco--fim">
+      <h2>O que não se edita por aqui</h2>
+      <p>
+        O texto das páginas e o conteúdo clínico dos tipos de câncer ficam no
+        código do site. Para alterar qualquer um dos dois, fale com quem cuida
+        da parte técnica.
+      </p>
+    </section>
+  </main>
+
+</div>
+
+<script type="application/json" id="painelDados">{"arquivo":"src/data/site.json","ramo":"main","campos":[{"chave":"telefone","rotulo":"Telefone","tipo":"tel","obrigatorio":true,"opcional":false,"nota":""},{"chave":"whatsapp","rotulo":"WhatsApp","tipo":"whatsapp","obrigatorio":false,"opcional":false,"nota":"Sem ele, os formulários de contato avisam que o WhatsApp não está configurado."},{"chave":"endereco","rotulo":"Endereço","tipo":"texto","obrigatorio":true,"opcional":false,"nota":""},{"chave":"cidade","rotulo":"Cidade","tipo":"texto","obrigatorio":true,"opcional":false,"nota":""},{"chave":"horario","rotulo":"Horário de atendimento","tipo":"texto","obrigatorio":true,"opcional":false,"nota":""},{"chave":"instagram","rotulo":"Instagram","tipo":"link","obrigatorio":false,"opcional":true,"nota":""},{"chave":"facebook","rotulo":"Facebook","tipo":"link","obrigatorio":false,"opcional":true,"nota":""},{"chave":"linkedin","rotulo":"LinkedIn","tipo":"link","obrigatorio":false,"opcional":true,"nota":""}],"publicado":{"telefone":"(18) 0000-0000","endereco":"[Endereço completo a inserir]","cidade":"Araçatuba — SP","horario":"Segunda a sexta, 8h às 18h","instagram":"","facebook":"","linkedin":"","whatsapp":""}}</script>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<div class="painel-shell" id="painelShell" data-estado="carregando">
+
+  <header class="painel-bar">
+    <a class="painel-logo" href="index.html">
+      <img src="assets/img/logo.svg" alt="" width="30" height="30">
+      <span>Área administrativa</span>
+    </a>
+    <div class="painel-bar-acoes">
+      <span class="painel-quem" id="painelQuem" hidden></span>
+      <a class="painel-bar-link" href="index.html">Ver o site</a>
+      <button type="button" class="painel-bar-link" id="painelSair" hidden>Sair</button>
+    </div>
+  </header>
+
+  <!-- Enquanto o Netlify Identity responde — e enquanto a janela de convite
+       ou de nova senha estiver aberta por cima. -->
+  <section class="painel-porta" data-quando="carregando">
+    <div class="painel-porta-card">
+      <p class="painel-porta-espera">Verificando o acesso.</p>
+    </div>
+  </section>
+
+  <!-- O serviço de login não existe neste endereço ----------------------- -->
+  <section class="painel-porta" data-quando="indisponivel">
+    <div class="painel-porta-card">
+      <h1>O painel não abre aqui</h1>
+      <p id="painelIndisponivel">O login roda junto com o site publicado na Netlify.
+        Neste endereço ele não existe, então não há o que abrir.</p>
+      <p class="painel-porta-pe"><a href="index.html">Voltar ao site</a></p>
+    </div>
+  </section>
+
+  <!-- Painel ------------------------------------------------------------ -->
+  <main class="painel" data-quando="aberto">
+    <h1>Painel</h1>
+    <p class="painel-resumo" id="painelResumo"></p>
+
+    <section class="painel-bloco" aria-labelledby="painelContatoTitulo">
+      <h2 id="painelContatoTitulo">O que o site mostra hoje</h2>
+      <p class="painel-legenda">
+        Estes valores aparecem no rodapé de todas as páginas e na página de
+        contato. Mudar aqui muda em todas de uma vez.
+      </p>
+
+      <p class="painel-aviso" id="painelAviso" role="status" hidden></p>
+
+      <div id="painelLeitura">
+        <ul class="painel-lista" id="painelLista"></ul>
+        <button type="button" class="painel-acao" id="painelEditar">Editar estas informações</button>
+      </div>
+
+      <form class="painel-form" id="painelForm" novalidate hidden>
+{{PAINEL_FORMULARIO}}
+        <p class="painel-erro" id="painelErro" role="alert" hidden></p>
+        <div class="painel-form-acoes">
+          <button type="submit" class="painel-acao" id="painelSalvar">Salvar alterações</button>
+          <button type="button" class="painel-bar-link" id="painelCancelar">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="painel-bloco">
+      <h2>O site</h2>
+      <p class="painel-numeros">
+        <strong>{{TOTAL_PAGINAS}}</strong> páginas publicadas, sendo
+        <strong>{{TOTAL_CANCERES}}</strong> sobre tipos de câncer.
+      </p>
+      <p class="painel-legenda">
+        As páginas são geradas de novo a cada alteração salva, e a busca
+        interna acompanha sozinha.
+      </p>
+    </section>
+
+    <section class="painel-bloco painel-bloco--fim">
+      <h2>O que não se edita por aqui</h2>
+      <p>
+        O texto das páginas e o conteúdo clínico dos tipos de câncer ficam no
+        código do site. Para alterar qualquer um dos dois, fale com quem cuida
+        da parte técnica.
+      </p>
+    </section>
+  </main>
+
+</div>
+
+<script type="application/json" id="painelDados">{{PAINEL_DADOS}}</script>

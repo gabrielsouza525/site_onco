@@ -3,18 +3,26 @@
 # COMO FUNCIONA
 # O CMS grava direto nos arquivos de src/ e faz um commit no repositório.
 # O workflow .github/workflows/build.yml roda o build.js e regenera o HTML,
-# e o GitHub Pages republica. Nenhum passo manual.
+# e a Netlify republica sozinha. Nenhum passo manual.
 #
-# AUTENTICAÇÃO — leia antes de publicar
-# O backend "github" precisa de um servidor de OAuth para trocar o código de
-# login por um token; o GitHub Pages não tem servidor. Enquanto isso não for
-# resolvido (ver README), use o modo local: `npx decap-server` em um terminal
-# e `npm start` em outro, depois abra http://localhost:8080/admin/.
-# O local_backend abaixo é ignorado quando o site está publicado.
+# AUTENTICAÇÃO
+# O login é o Netlify Identity. Para funcionar, no painel da Netlify:
+#   1. Identity  -> Enable Identity
+#   2. Identity  -> Services -> Git Gateway -> Enable
+#   3. Identity  -> Registration: deixe "Invite only"
+#   4. Identity  -> Invite users: convide quem vai editar
+# Quem for convidado recebe um e-mail, define a senha e entra em /admin/.
+#
+# Para editar na propria maquina, sem passar pela Netlify:
+#   npx decap-server   (em um terminal)
+#   npm start          (em outro)
+# e abrir http://localhost:8080/admin/ — o local_backend abaixo cuida disso.
 
 backend:
-  name: github
-  repo: gabrielsouza525/site_onco
+  # git-gateway: quem autentica e o Netlify Identity, e a Netlify assina os
+  # commits em nome de quem entrou. Sem isso o painel precisaria de um
+  # servidor de OAuth proprio, que o GitHub Pages nao tem.
+  name: git-gateway
   branch: main
   commit_messages:
     create: 'Cria {{collection}} "{{slug}}" pelo painel'
