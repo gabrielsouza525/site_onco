@@ -166,6 +166,10 @@ const TOKENS_SITE = {
   // coisas: o link do icone no rodape e o numero que os formularios usam.
   WHATSAPP: digitosWhatsapp ? `https://wa.me/${digitosWhatsapp}` : '#',
   WHATSAPP_NUMERO: digitosWhatsapp,
+  // Fotos do médico. O painel troca por uma enviada (fotos/...jpg); sem
+  // valor, fica a foto que vem no repositório.
+  FOTO_INICIO: SITE.foto_inicio || 'assets/img/dr-bruno-kersten-home.jpg',
+  FOTO_SOBRE: SITE.foto_sobre || 'assets/img/dr-bruno-kersten-sobre.jpg',
 };
 
 /* Os valores vêm de um formulário (o painel), então entram escapados — em

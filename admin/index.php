@@ -22,8 +22,37 @@ $errosDaGaveta = [];
 $emailDoNovoAcesso = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Envio maior que o post_max_size da hospedagem chega sem nada — nem o
+    // token. Sem este aviso, a pessoa leria "o formulário expirou".
+    if (!$_POST && !$_FILES && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+        avisar('erro', 'A foto é maior que o limite que a hospedagem aceita (' .
+            ini_get('post_max_size') . '). Envie uma versão menor.', 'fotos');
+        ir('index.php#fotos');
+    }
     exigirCsrf();
     $acao = (string) ($_POST['acao'] ?? '');
+
+    if ($acao === 'foto' || $acao === 'foto_original') {
+        $foto = null;
+        foreach (fotos() as $f) {
+            if ($f['chave'] === ($_POST['foto'] ?? '')) {
+                $foto = $f;
+            }
+        }
+        if ($foto !== null) {
+            try {
+                $novo = $acao === 'foto' ? processarFoto($foto, $_FILES['arquivo'] ?? []) : $foto['padrao'];
+                salvarDados(array_merge($dados, [$foto['chave'] => $novo]));
+                publicar();
+                avisar('ok', $acao === 'foto'
+                    ? $foto['rotulo'] . ' trocada. O site já mostra a nova.'
+                    : $foto['rotulo'] . ' voltou a ser a original.', 'fotos');
+            } catch (Throwable $erro) {
+                avisar('erro', $erro->getMessage(), 'fotos');
+            }
+        }
+        ir('index.php#fotos');
+    }
 
     if ($acao === 'salvar') {
         [$limpos, $errosDosDados] = validarDados($_POST);
@@ -40,32 +69,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             if (!$mudou) {
-                avisar('info', 'Nenhum campo mudou, então não havia o que salvar.');
-                ir('index.php');
+                avisar('info', 'Nenhum campo mudou, então não havia o que salvar.', 'contato');
+                ir('index.php#contato');
             }
             try {
                 salvarDados(array_merge($dados, $limpos));
             } catch (Throwable $erro) {
-                avisar('erro', 'Nada foi salvo: ' . $erro->getMessage());
-                ir('index.php');
+                avisar('erro', 'Nada foi salvo: ' . $erro->getMessage(), 'contato');
+                ir('index.php#contato');
             }
             try {
                 publicar();
-                avisar('ok', 'Salvo e publicado. O site já mostra os dados novos.');
+                avisar('ok', 'Salvo e publicado. O site já mostra os dados novos.', 'contato');
             } catch (Throwable $erro) {
                 avisar('erro', 'Os dados foram salvos, mas a publicação falhou: ' . $erro->getMessage() .
-                    ' Tente “Publicar de novo”, mais abaixo.');
+                    ' Tente “Publicar de novo”, mais abaixo.', 'contato');
             }
-            ir('index.php');
+            ir('index.php#contato');
         }
     }
 
     if ($acao === 'publicar') {
         try {
             publicar();
-            avisar('ok', 'Site publicado de novo, com os dados atuais.');
+            avisar('ok', 'Site publicado de novo, com os dados atuais.', 'site');
         } catch (Throwable $erro) {
-            avisar('erro', 'A publicação falhou: ' . $erro->getMessage());
+            avisar('erro', 'A publicação falhou: ' . $erro->getMessage(), 'site');
         }
         ir('index.php#site');
     }
@@ -86,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             definirSenha($alvo, (string) $_POST['senha']);
             avisar('ok', $jaTinha
                 ? 'A senha de ' . $alvo . ' foi trocada.'
-                : $alvo . ' agora tem acesso ao painel.');
+                : $alvo . ' agora tem acesso ao painel.', 'acessos');
             ir('index.php#acessos');
         }
     }
@@ -95,11 +124,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $alvo = normalizarEmail((string) ($_POST['email'] ?? ''));
         $usuarios = carregarUsuarios();
         if ($alvo === $eu) {
-            avisar('erro', 'Você não pode remover o próprio acesso. Peça para outra pessoa da equipe.');
+            avisar('erro', 'Você não pode remover o próprio acesso. Peça para outra pessoa da equipe.', 'acessos');
         } elseif (isset($usuarios[$alvo])) {
             unset($usuarios[$alvo]);
             salvarUsuarios($usuarios);
-            avisar('ok', $alvo . ' não tem mais acesso ao painel.');
+            avisar('ok', $alvo . ' não tem mais acesso ao painel.', 'acessos');
         }
         ir('index.php#acessos');
     }
@@ -116,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 definirSenha($eu, $nova);
                 session_regenerate_id(true);
-                avisar('ok', 'Sua senha foi trocada.');
+                avisar('ok', 'Sua senha foi trocada.', 'acessos');
                 ir('index.php#acessos');
             }
         }
@@ -197,6 +226,7 @@ abrirPagina('Painel — Área administrativa', 'page-painel');
       Estes valores aparecem no rodapé de todas as páginas e na página de
       contato. Mudar aqui muda em todas de uma vez.
     </p>
+<?php blocoDeAviso($aviso, 'contato'); ?>
 
 <?php if (!$editando): ?>
     <ul class="painel-lista">
@@ -250,8 +280,62 @@ endforeach; ?>
 <?php endif; ?>
   </section>
 
+  <section class="painel-bloco" id="fotos" aria-labelledby="tituloFotos">
+    <h2 id="tituloFotos">Fotos</h2>
+    <p class="painel-legenda">
+      A foto enviada é cortada em retrato (3 × 4) e reduzida para carregar
+      rápido. Prefira uma com o rosto no terço de cima e fundo simples.
+    </p>
+<?php blocoDeAviso($aviso, 'fotos'); ?>
+
+    <ul class="painel-fotos">
+<?php foreach (fotos() as $foto):
+    $trocada = fotoTrocada($foto, $dados);
+    $id = 'foto-' . $foto['nome'];
+?>
+      <li class="painel-foto">
+        <img id="<?= e($id) ?>-previa" class="painel-foto-imagem"
+             src="../<?= e(caminhoDaFoto($foto, $dados)) ?>"
+             alt="<?= e($foto['rotulo']) ?>, como está no site" width="120" height="160">
+        <div class="painel-foto-texto">
+          <span class="painel-valor"><?= e($foto['rotulo']) ?></span>
+          <p class="painel-nota">
+            <?= e($foto['onde']) ?>
+            <?= $trocada ? 'Enviada pelo painel.' : 'É a foto original do site.' ?>
+          </p>
+
+          <form class="painel-foto-envio" method="post" action="index.php#fotos" enctype="multipart/form-data">
+            <?= campoCsrf() ?>
+            <input type="hidden" name="acao" value="foto">
+            <input type="hidden" name="foto" value="<?= e($foto['chave']) ?>">
+            <label class="painel-arquivo-rotulo" for="<?= e($id) ?>">Nova foto</label>
+            <input class="painel-arquivo" id="<?= e($id) ?>" type="file" name="arquivo"
+                   accept="image/jpeg,image/png,image/webp" required
+                   data-previa="<?= e($id) ?>-previa">
+            <p class="painel-dica painel-foto-situacao" id="<?= e($id) ?>-situacao" aria-live="polite"></p>
+            <div class="painel-form-acoes">
+              <button type="submit" class="painel-acao">Enviar foto</button>
+            </div>
+          </form>
+
+<?php if ($trocada): ?>
+          <form class="painel-foto-original" method="post" action="index.php#fotos"
+                data-confirmar="Voltar a usar a foto original do site no lugar da que foi enviada?">
+            <?= campoCsrf() ?>
+            <input type="hidden" name="acao" value="foto_original">
+            <input type="hidden" name="foto" value="<?= e($foto['chave']) ?>">
+            <button type="submit" class="painel-link">Voltar à foto original</button>
+          </form>
+<?php endif; ?>
+        </div>
+      </li>
+<?php endforeach; ?>
+    </ul>
+  </section>
+
   <section class="painel-bloco" id="site" aria-labelledby="tituloSite">
     <h2 id="tituloSite">O site</h2>
+<?php blocoDeAviso($aviso, 'site'); ?>
     <p class="painel-numeros">
       <strong><?= (int) $n['paginas'] ?></strong> páginas publicadas, sendo
       <strong><?= (int) $n['canceres'] ?></strong> sobre tipos de câncer.
@@ -276,6 +360,7 @@ endforeach; ?>
   <section class="painel-bloco" id="acessos" aria-labelledby="tituloAcessos">
     <h2 id="tituloAcessos">Acessos</h2>
     <p class="painel-legenda">Quem consegue entrar neste painel.</p>
+<?php blocoDeAviso($aviso, 'acessos'); ?>
 
     <ul class="painel-acessos">
 <?php foreach (array_keys($usuarios) as $email): ?>

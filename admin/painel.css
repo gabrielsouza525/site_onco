@@ -122,6 +122,8 @@
   font-size: 14.5px;
   line-height: 1.55;
 }
+/* Dentro de um bloco, logo abaixo da legenda. */
+.painel-bloco .painel-aviso { margin: 18px 0 4px; }
 .painel-aviso[data-tipo="ok"] {
   border-color: rgba(63, 159, 90, .45);
   background: rgba(63, 159, 90, .12);
@@ -279,6 +281,69 @@
 .painel-acao--leve:hover,
 .painel-acao--leve:focus-visible { background: rgba(143, 189, 232, .08); color: #fff; }
 
+/* Fotos ------------------------------------------------------------------ */
+.painel-fotos {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+}
+.painel-foto {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 22px;
+  align-items: start;
+  padding: 20px 0;
+  border-top: 1px solid #1a2738;
+}
+.painel-foto:last-child { border-bottom: 1px solid #1a2738; }
+/* Mesmo enquadramento do corte feito no servidor: centro, puxando para cima. */
+.painel-foto-imagem {
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  object-position: center 25%;
+  border-radius: 12px;
+  border: 1px solid #24344a;
+  background: #0f1826;
+}
+/* Prévia de uma foto ainda não enviada: o tracejado diz "não está no site". */
+.painel-foto-imagem[data-previa] {
+  outline: 2px dashed var(--blue-300);
+  outline-offset: 3px;
+}
+.painel-foto-texto .painel-nota { margin: 4px 0 16px; }
+
+.painel-arquivo-rotulo {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9fb3cc;
+  margin-bottom: 6px;
+}
+.painel-arquivo {
+  display: block;
+  width: 100%;
+  max-width: 380px;
+  font-size: 13.5px;
+  color: #9fb3cc;
+}
+.painel-arquivo::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  border: 1px solid #2f4460;
+  border-radius: 10px;
+  background: transparent;
+  color: #cfe2f6;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.painel-arquivo::file-selector-button:hover { background: rgba(143, 189, 232, .08); color: #fff; }
+.painel-foto-situacao:empty { display: none; }
+.painel-foto-envio .painel-form-acoes { margin-top: 14px; }
+.painel-foto-original { margin-top: 12px; font-size: 13.5px; }
+
 /* Acessos ---------------------------------------------------------------- */
 .painel-acessos {
   list-style: none;
@@ -320,6 +385,8 @@
   .painel-quem { display: none; }
   .painel { padding: 36px 18px 64px; }
   .painel-resumo { margin-bottom: 34px; }
+  .painel-foto { grid-template-columns: 88px 1fr; gap: 14px; }
+  .painel-foto-imagem { width: 88px; height: 117px; }
 }
 
 /* Telas de login e de criação de acesso ---------------------------------- */

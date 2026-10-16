@@ -90,9 +90,10 @@ function painelDeMarca(): void
 <?php
 }
 
-function blocoDeAviso(?array $aviso): void
+/** Mostra o aviso se ele for deste bloco do painel ('' = topo da página). */
+function blocoDeAviso(?array $aviso, string $secao = ''): void
 {
-    if (!$aviso) {
+    if (!$aviso || ($aviso['secao'] ?? '') !== $secao) {
         return;
     }
     $papel = $aviso['tipo'] === 'erro' ? 'alert' : 'status';

@@ -213,10 +213,14 @@ function exigirCsrf(): void
     }
 }
 
-/** Mensagem que aparece uma vez, na próxima tela. */
-function avisar(string $tipo, string $texto): void
+/**
+ * Mensagem que aparece uma vez, na próxima tela. `secao` é o bloco do painel
+ * onde ela aparece — o mesmo para onde a página volta rolada, senão a pessoa
+ * não veria a confirmação do que acabou de fazer.
+ */
+function avisar(string $tipo, string $texto, string $secao = ''): void
 {
-    $_SESSION['aviso'] = ['tipo' => $tipo, 'texto' => $texto];
+    $_SESSION['aviso'] = ['tipo' => $tipo, 'texto' => $texto, 'secao' => $secao];
 }
 
 function retirarAviso(): ?array
@@ -639,6 +643,215 @@ function validarDados(array $entrada): array
 }
 
 /* ---------------------------------------------------------------------------
+ * Fotos
+ *
+ * A foto enviada é guardada na pasta de dados e copiada para public_html/fotos
+ * a cada publicação. Como essa pasta não vem no pacote, um pacote novo nunca
+ * volta a foto antiga. O nome leva um pedaço do hash do arquivo: foto nova,
+ * endereço novo, e nenhum navegador fica mostrando a antiga do cache.
+ * ------------------------------------------------------------------------ */
+
+const PASTA_FOTOS_PUBLICA = 'fotos';
+const FOTO_LIMITE_BYTES = 15 * 1024 * 1024;
+const FOTO_LIMITE_PIXELS = 50000000; // 50 megapixels
+
+/** As fotos que o painel troca. Todas em retrato 3×4, como no layout. */
+function fotos(): array
+{
+    return [
+        ['chave' => 'foto_inicio', 'token' => 'FOTO_INICIO', 'nome' => 'inicio',
+         'rotulo' => 'Foto da página inicial',
+         'onde' => 'Na página inicial, ao lado de “Sobre o médico”.',
+         'padrao' => 'assets/img/dr-bruno-kersten-home.jpg', 'largura' => 880, 'altura' => 1173],
+        ['chave' => 'foto_sobre', 'token' => 'FOTO_SOBRE', 'nome' => 'sobre',
+         'rotulo' => 'Foto da página Sobre',
+         'onde' => 'No topo da página “Sobre o Dr. Bruno Kersten”.',
+         'padrao' => 'assets/img/dr-bruno-kersten-sobre.jpg', 'largura' => 880, 'altura' => 1173],
+    ];
+}
+
+function pastaDeFotosGuardadas(): string
+{
+    return pastaDeDados() . '/fotos';
+}
+
+/** A foto foi trocada pelo painel (e o arquivo ainda existe)? */
+function fotoTrocada(array $foto, array $dados): bool
+{
+    $valor = (string) ($dados[$foto['chave']] ?? '');
+    return (bool) preg_match('~^' . PASTA_FOTOS_PUBLICA . '/' . $foto['nome'] . '-[a-f0-9]{8}\.jpg$~', $valor)
+        && is_file(pastaDeFotosGuardadas() . '/' . basename($valor));
+}
+
+/**
+ * Endereço que entra no HTML. Qualquer valor estranho — arquivo sumido,
+ * caminho que não é de foto do painel — volta para a foto original, para a
+ * página nunca ficar com imagem quebrada.
+ */
+function caminhoDaFoto(array $foto, array $dados): string
+{
+    return fotoTrocada($foto, $dados) ? (string) $dados[$foto['chave']] : $foto['padrao'];
+}
+
+/** Mensagem para quem enviou um arquivo que não chegou. */
+function problemaNoEnvio(int $codigo): string
+{
+    switch ($codigo) {
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            return 'A foto é maior que o limite que a hospedagem aceita (' .
+                ini_get('upload_max_filesize') . '). Envie uma versão menor.';
+        case UPLOAD_ERR_PARTIAL:
+            return 'A foto chegou pela metade. Tente de novo.';
+        case UPLOAD_ERR_NO_FILE:
+            return 'Escolha uma foto antes de enviar.';
+        default:
+            return 'A hospedagem não conseguiu receber a foto (código ' . $codigo . ').';
+    }
+}
+
+/**
+ * Lê a foto enviada, corta no formato da página, reduz e grava como JPEG.
+ * Regravar a imagem do zero também descarta o que vinha escondido nela — a
+ * localização GPS que o celular anota, por exemplo — e qualquer conteúdo que
+ * não seja imagem.
+ *
+ * @return string caminho público da foto nova, ex.: fotos/inicio-1a2b3c4d.jpg
+ */
+function processarFoto(array $foto, array $envio): string
+{
+    if (!function_exists('imagecreatetruecolor')) {
+        throw new RuntimeException(
+            'A hospedagem está sem a biblioteca de imagens do PHP (GD). Peça ao suporte para ativá-la.'
+        );
+    }
+    $codigo = (int) ($envio['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($codigo !== UPLOAD_ERR_OK) {
+        throw new RuntimeException(problemaNoEnvio($codigo));
+    }
+    $temporario = (string) ($envio['tmp_name'] ?? '');
+    if (!is_uploaded_file($temporario)) {
+        throw new RuntimeException('Escolha uma foto antes de enviar.');
+    }
+    if ((int) filesize($temporario) > FOTO_LIMITE_BYTES) {
+        throw new RuntimeException('A foto passa de 15 MB. Envie uma versão menor.');
+    }
+
+    $info = @getimagesize($temporario);
+    $tipos = [IMAGETYPE_JPEG => 'imagecreatefromjpeg', IMAGETYPE_PNG => 'imagecreatefrompng'];
+    if (defined('IMAGETYPE_WEBP') && function_exists('imagecreatefromwebp')) {
+        $tipos[IMAGETYPE_WEBP] = 'imagecreatefromwebp';
+    }
+    if (!$info || !isset($tipos[$info[2]])) {
+        throw new RuntimeException('Esse arquivo não é uma foto em JPG, PNG ou WebP.');
+    }
+    [$largura, $altura] = $info;
+    if ($largura * $altura > FOTO_LIMITE_PIXELS) {
+        throw new RuntimeException('A foto tem resolução alta demais. Envie uma versão menor.');
+    }
+
+    // Uma foto de celular aberta na memória ocupa bem mais que o arquivo.
+    @ini_set('memory_limit', '256M');
+    $origem = @$tipos[$info[2]]($temporario);
+    if (!$origem) {
+        throw new RuntimeException('Não foi possível abrir a foto. Ela pode estar corrompida.');
+    }
+
+    // Celular grava a foto deitada e anota "gire 90°"; sem isto ela sairia torta.
+    if ($info[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
+        $exif = @exif_read_data($temporario);
+        $giro = [3 => 180, 6 => -90, 8 => 90][(int) ($exif['Orientation'] ?? 1)] ?? 0;
+        if ($giro) {
+            $girada = imagerotate($origem, $giro, 0);
+            if ($girada) {
+                imagedestroy($origem);
+                $origem = $girada;
+            }
+        }
+    }
+    $largura = imagesx($origem);
+    $altura = imagesy($origem);
+
+    // Corta no formato da página (3×4). Sobrando altura, o corte puxa para
+    // cima: em retrato, o rosto costuma estar no terço de cima.
+    $proporcao = $foto['largura'] / $foto['altura'];
+    if ($largura / $altura > $proporcao) {
+        $corteA = $altura;
+        $corteL = (int) round($altura * $proporcao);
+        $x = (int) (($largura - $corteL) / 2);
+        $y = 0;
+    } else {
+        $corteL = $largura;
+        $corteA = (int) round($largura / $proporcao);
+        $x = 0;
+        $y = (int) (($altura - $corteA) * 0.25);
+    }
+    if ($corteL < 400) {
+        imagedestroy($origem);
+        throw new RuntimeException('A foto é pequena demais para o site. Use uma com pelo menos 400 pixels de largura.');
+    }
+
+    // Não amplia: foto menor que o tamanho do site fica no tamanho dela.
+    $finalL = min($foto['largura'], $corteL);
+    $finalA = (int) round($finalL / $proporcao);
+    $destino = imagecreatetruecolor($finalL, $finalA);
+    // PNG com fundo transparente ficaria preto em JPEG.
+    imagefill($destino, 0, 0, imagecolorallocate($destino, 255, 255, 255));
+    imagecopyresampled($destino, $origem, 0, 0, $x, $y, $finalL, $finalA, $corteL, $corteA);
+    imagedestroy($origem);
+    imageinterlace($destino, true);
+
+    ob_start();
+    imagejpeg($destino, null, 82);
+    $jpeg = (string) ob_get_clean();
+    imagedestroy($destino);
+
+    $nome = $foto['nome'] . '-' . substr(sha1($jpeg), 0, 8) . '.jpg';
+    $pasta = pastaDeFotosGuardadas();
+    if (!is_dir($pasta)) {
+        @mkdir($pasta, 0700, true);
+    }
+    gravarAtomico($pasta . '/' . $nome, $jpeg, 0644);
+    return PASTA_FOTOS_PUBLICA . '/' . $nome;
+}
+
+/**
+ * Deixa public_html/fotos com exatamente as fotos em uso: copia as que
+ * faltam e apaga as que foram substituídas. Só mexe em arquivos com o nome
+ * que o painel dá; o resto da pasta fica como está.
+ */
+function sincronizarFotos(array $dados): void
+{
+    $publica = RAIZ_SITE . '/' . PASTA_FOTOS_PUBLICA;
+    $emUso = [];
+    foreach (fotos() as $foto) {
+        if (fotoTrocada($foto, $dados)) {
+            $emUso[] = basename((string) $dados[$foto['chave']]);
+        }
+    }
+    if ($emUso && !is_dir($publica)) {
+        @mkdir($publica, 0755, true);
+    }
+    foreach ($emUso as $nome) {
+        $origem = pastaDeFotosGuardadas() . '/' . $nome;
+        $destino = $publica . '/' . $nome;
+        if (!is_file($destino) || filesize($destino) !== filesize($origem)) {
+            gravarAtomico($destino, (string) file_get_contents($origem), 0644);
+        }
+    }
+
+    $padrao = '/^(' . implode('|', array_column(fotos(), 'nome')) . ')-[a-f0-9]{8}\.jpg$/';
+    foreach ([$publica, pastaDeFotosGuardadas()] as $pasta) {
+        foreach (glob($pasta . '/*.jpg') ?: [] as $arquivo) {
+            $nome = basename($arquivo);
+            if (preg_match($padrao, $nome) && !in_array($nome, $emUso, true)) {
+                @unlink($arquivo);
+            }
+        }
+    }
+}
+
+/* ---------------------------------------------------------------------------
  * Publicação
  * ------------------------------------------------------------------------ */
 
@@ -664,6 +877,9 @@ function tokensDoSite(array $s): array
         'WHATSAPP' => $whatsapp !== '' ? 'https://wa.me/' . $whatsapp : '#',
         'WHATSAPP_NUMERO' => $whatsapp,
     ];
+    foreach (fotos() as $foto) {
+        $valores[$foto['token']] = caminhoDaFoto($foto, $s);
+    }
     $tokens = [];
     foreach ($valores as $nome => $valor) {
         $tokens['{{' . $nome . '}}'] = htmlspecialchars($valor, ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8');
@@ -719,7 +935,10 @@ function publicar(): array
         flock($trava, LOCK_EX);
     }
     try {
-        $tokens = tokensDoSite(carregarDados());
+        $dados = carregarDados();
+        // As fotos primeiro: quando a página nova sair, a foto já está lá.
+        sincronizarFotos($dados);
+        $tokens = tokensDoSite($dados);
         foreach ($modelos as $nome) {
             $html = strtr((string) file_get_contents(MODELOS_DIR . '/' . $nome), $tokens);
             gravarAtomico(RAIZ_SITE . '/' . $nome, $html, 0644);

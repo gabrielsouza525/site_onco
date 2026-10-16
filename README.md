@@ -113,8 +113,9 @@ o envio.
 ## Painel administrativo e hospedagem
 
 O painel fica em **`/admin/`** e é escrito em PHP, sem banco de dados. Ele edita
-os dados de contato (telefone, WhatsApp, endereço, horário e redes) e publica na
-hora: salvou, o site já mostra.
+os dados de contato (telefone, WhatsApp, endereço, horário e redes) e troca as
+duas fotos do médico (página inicial e página Sobre). Publica na hora: salvou, o
+site já mostra.
 
 ### Como funciona
 
@@ -135,6 +136,22 @@ Daí saem três garantias:
 Os dados, as senhas e as sessões ficam na pasta `painel-dados`, **ao lado** da
 `public_html` — fora do alcance do navegador. Se a hospedagem não deixar criar
 pasta ali, o painel usa `admin/dados`, protegida por `.htaccess`.
+
+### Fotos
+
+A foto enviada é cortada em retrato 3×4 (puxando o corte para cima, onde costuma
+estar o rosto), reduzida para 880×1173 e regravada em JPEG. Regravar descarta o
+que vinha escondido no arquivo, como a localização GPS que o celular anota. No
+navegador, fotos grandes são reduzidas antes de subir, para não esbarrar no
+limite de envio da hospedagem.
+
+O original fica em `painel-dados/fotos` e é copiado para `public_html/fotos` a
+cada publicação. Essa pasta não vem no pacote, então um pacote novo não volta a
+foto antiga. O nome do arquivo leva um pedaço do hash: foto nova, endereço novo,
+sem cache mostrando a anterior. Os endereços das fotos entram nas páginas pelos
+tokens `{{FOTO_INICIO}}` e `{{FOTO_SOBRE}}`.
+
+O painel precisa da extensão GD do PHP; sem ela, ele avisa e não troca a foto.
 
 ### Publicar uma versão nova
 
