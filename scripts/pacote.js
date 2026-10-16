@@ -3,14 +3,17 @@
  * Monta o pacote para a hospedagem (DirectAdmin): pacote/site-drbrunokersten.zip
  *
  * O que vai no zip, para extrair dentro da public_html:
+ *   *.html           as páginas prontas, com os dados de src/data/site.json
  *   assets/          imagens, CSS, JS e o índice da busca
  *   admin/           o painel em PHP
  *   admin/modelos/   cada página SEM os dados de contato ({{TELEFONE}} etc.),
  *                    mais versao.json e site-inicial.json
  *
- * O HTML final não vai. Quem gera é o painel, na primeira vez que alguém o
- * abre depois do envio, aplicando os dados salvos nele. É isso que impede um
- * pacote novo de apagar o telefone que o Dr. Bruno salvou pelo painel.
+ * Com as páginas prontas, o site funciona assim que o zip é extraído — mesmo
+ * numa public_html vazia. Os dados salvos pelo painel não se perdem: ficam na
+ * pasta de dados, fora do zip, e o painel volta a aplicá-los sozinho na
+ * primeira vez que é aberto depois do envio (a versão do pacote mudou). Até
+ * lá, as páginas mostram os dados do repositório.
  *
  * Uso: npm run pacote
  */
@@ -75,7 +78,14 @@ function listar(pasta, prefixo, filtro) {
 const doAdmin = (relativo) =>
   !/^admin\/(dados|modelos)\//.test(relativo) || /\/\.htaccess$/.test(relativo);
 
+// As páginas prontas da raiz, que o build acabou de gerar.
+const paginasProntas = fs.readdirSync(ROOT)
+  .filter((nome) => nome.endsWith('.html'))
+  .sort()
+  .map((nome) => ({ nome, origem: path.join(ROOT, nome) }));
+
 const arquivos = [
+  ...paginasProntas,
   ...listar(path.join(ROOT, 'assets'), 'assets/'),
   ...listar(path.join(ROOT, 'admin'), 'admin/', doAdmin),
   ...listar(modelos, 'admin/modelos/'),
@@ -188,7 +198,6 @@ const destino = path.join(SAIDA, NOME);
 fs.writeFileSync(destino, gerarZip(entradas));
 fs.rmSync(temporaria, { recursive: true, force: true });
 
-const paginas = arquivos.filter((a) => /^admin\/modelos\/.+\.html$/.test(a.nome)).length;
 const tamanho = (fs.statSync(destino).size / 1024 / 1024).toFixed(2);
-console.log(`✓ ${path.relative(ROOT, destino)} — ${arquivos.length} arquivos, ${paginas} páginas, ${tamanho} MB`);
+console.log(`✓ ${path.relative(ROOT, destino)} — ${arquivos.length} arquivos, ${paginasProntas.length} páginas prontas, ${tamanho} MB`);
 console.log(`  versão ${versao}`);

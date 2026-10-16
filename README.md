@@ -119,14 +119,19 @@ site já mostra.
 
 ### Como funciona
 
-As páginas continuam sendo HTML estático. O pacote enviado à hospedagem traz cada
-página como **modelo**, com `{{TELEFONE}}` e afins no lugar dos dados. O painel
-guarda os dados e grava o HTML final na raiz do site, aplicando os valores.
+As páginas continuam sendo HTML estático. O pacote enviado à hospedagem traz as
+páginas prontas e também cada página como **modelo**, com `{{TELEFONE}}` e afins
+no lugar dos dados. O painel guarda os dados e regrava o HTML final na raiz do
+site, aplicando os valores salvos nele.
 
 Daí saem três garantias:
 
-- **Um pacote novo não apaga o que foi salvo pelo painel**: os dados ficam no
-  servidor, e o pacote só traz os modelos.
+- **O site funciona assim que o zip é extraído**, mesmo numa `public_html`
+  vazia: as páginas prontas vêm no pacote.
+- **Um pacote novo não apaga o que foi salvo pelo painel**: os dados ficam na
+  pasta de dados, fora do zip, e o painel volta a aplicá-los na primeira vez
+  que é aberto depois do envio. Até lá, as páginas mostram os dados do
+  repositório.
 - **Se o PHP falhar, o site continua no ar**: as páginas já gravadas são HTML
   comum. Só o painel para.
 - **O painel gera o mesmo HTML que o `build.js`**: a regra que aplica os dados
@@ -164,9 +169,9 @@ Gera `pacote/site-drbrunokersten.zip`. Na hospedagem:
 1. No gerenciador de arquivos do DirectAdmin, abra `domains/drbrunokersten.com.br/public_html`.
 2. Envie o zip e use **Extrair** ali mesmo, sobrescrevendo o que existir.
 3. Apague o zip.
-4. **Abra `drbrunokersten.com.br/admin/` uma vez.** É nesse momento que o painel
-   aplica os dados e publica as páginas — antes disso, o site continua com a
-   versão anterior.
+4. **Abra `drbrunokersten.com.br/admin/` uma vez.** O site já funciona antes
+   disso, mas é nesse momento que o painel reaplica o telefone, o WhatsApp e as
+   fotos salvos nele.
 
 ### Primeiro acesso e senha esquecida
 
