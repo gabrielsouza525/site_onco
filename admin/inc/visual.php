@@ -82,10 +82,54 @@ function icone(string $nome): string
         'facebook' => '<path d="M15 3h-2.5A4.5 4.5 0 0 0 8 7.5V10H5.5v4H8v7h4v-7h3l1-4h-4V7.5a.5.5 0 0 1 .5-.5H15z"/>',
         'linkedin' => '<path d="M4.5 9v11M4.5 4.5v.01M10 20V9m0 4.5c0-2 1.4-3.5 3.4-3.5S17 11.5 17 13.8V20"/>',
         'whatsapp' => '<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/>',
+        'artigo' => '<path d="M4 19.5V6a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M9 8h7M9 12h5"/>',
+        'voltar' => '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+        'olho' => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
     ];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' .
         'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' .
         ($desenhos[$nome] ?? '') . '</svg>';
+}
+
+/**
+ * Barra lateral do painel. `$ativa` marca onde a pessoa está ('artigos' no
+ * editor de artigo); `$pendentes` vira o contador ao lado de Contato.
+ */
+function barraLateral(string $eu, int $pendentes, string $ativa = ''): void
+{
+    $itens = [
+        'contato' => ['index.php#contato', 'telefone', 'Contato'],
+        'artigos' => ['index.php#artigos', 'artigo', 'Artigos'],
+        'fotos' => ['index.php#fotos', 'foto', 'Fotos'],
+        'site' => ['index.php#site', 'globo', 'Publicação'],
+        'acessos' => ['index.php#acessos', 'pessoas', 'Acessos'],
+    ];
+    ?>
+  <aside class="app-lateral">
+    <a class="app-marca" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="40" height="40">
+      <span>
+        <strong>Dr. Bruno Kersten</strong>
+        <small>Área administrativa</small>
+      </span>
+    </a>
+
+    <nav class="app-nav" aria-label="Partes do painel">
+<?php foreach ($itens as $chave => [$endereco, $icone, $rotulo]): ?>
+      <a href="<?= e($endereco) ?>"<?= $chave === $ativa ? ' aria-current="page"' : '' ?>><?= icone($icone) ?><span><?= e($rotulo) ?></span><?php if ($chave === 'contato' && $pendentes): ?><span class="app-nav-conta" aria-label="<?= $pendentes ?> pendente<?= $pendentes > 1 ? 's' : '' ?>"><?= $pendentes ?></span><?php endif; ?></a>
+<?php endforeach; ?>
+    </nav>
+
+    <div class="app-usuario">
+      <span class="app-avatar" aria-hidden="true"><?= e(strtoupper(substr($eu, 0, 1))) ?></span>
+      <span class="app-email painel-quem"><?= e($eu) ?></span>
+      <form method="post" action="sair.php">
+        <?= campoCsrf() ?>
+        <button type="submit" class="app-sair" title="Sair do painel"><?= icone('sair') ?><span>Sair</span></button>
+      </form>
+    </div>
+  </aside>
+<?php
 }
 
 /** Painel de marca da tela de login e da de criar acesso. */

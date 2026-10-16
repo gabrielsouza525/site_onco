@@ -172,6 +172,7 @@ $aviso = retirarAviso();
 $publicacao = ultimaPublicacao();
 $n = contagens();
 $usuarios = carregarUsuarios();
+$artigos = carregarArtigos();
 
 $hora = (int) date('G');
 $saudacao = $hora >= 5 && $hora < 12 ? 'Bom dia' : ($hora >= 12 && $hora < 18 ? 'Boa tarde' : 'Boa noite');
@@ -211,37 +212,13 @@ abrirPagina('Painel — Área administrativa', 'page-painel');
 ?>
 <div class="app">
 
-  <aside class="app-lateral">
-    <a class="app-marca" href="../index.html">
-      <img src="../assets/img/logo.svg" alt="" width="40" height="40">
-      <span>
-        <strong>Dr. Bruno Kersten</strong>
-        <small>Área administrativa</small>
-      </span>
-    </a>
-
-    <nav class="app-nav" aria-label="Partes do painel">
-      <a href="index.php#contato"><?= icone('telefone') ?><span>Contato</span><?php if ($total): ?><span class="app-nav-conta" aria-label="<?= $total ?> pendente<?= $total > 1 ? 's' : '' ?>"><?= $total ?></span><?php endif; ?></a>
-      <a href="index.php#fotos"><?= icone('foto') ?><span>Fotos</span></a>
-      <a href="index.php#site"><?= icone('globo') ?><span>Publicação</span></a>
-      <a href="index.php#acessos"><?= icone('pessoas') ?><span>Acessos</span></a>
-    </nav>
-
-    <div class="app-usuario">
-      <span class="app-avatar" aria-hidden="true"><?= e(strtoupper(substr($eu, 0, 1))) ?></span>
-      <span class="app-email painel-quem"><?= e($eu) ?></span>
-      <form method="post" action="sair.php">
-        <?= campoCsrf() ?>
-        <button type="submit" class="app-sair" title="Sair do painel"><?= icone('sair') ?><span>Sair</span></button>
-      </form>
-    </div>
-  </aside>
+<?php barraLateral($eu, $total); ?>
 
   <main class="app-principal">
     <header class="app-topo">
       <div>
         <h1><?= e($saudacao) ?>.</h1>
-        <p class="app-subtitulo">Aqui você atualiza o contato e as fotos do site.</p>
+        <p class="app-subtitulo">Aqui você atualiza o contato, os artigos e as fotos do site.</p>
       </div>
       <a class="painel-acao painel-acao--leve" href="../index.html" target="_blank" rel="noopener"><?= icone('abrir') ?>Ver o site</a>
     </header>
@@ -380,6 +357,43 @@ endforeach; ?>
           </div>
         </figure>
       </div>
+    </section>
+
+    <!-- Artigos --------------------------------------------------------- -->
+    <section class="cartao" id="artigos" aria-labelledby="tituloArtigos">
+      <header class="cartao-topo">
+        <span class="cartao-ico"><?= icone('artigo') ?></span>
+        <div>
+          <h2 id="tituloArtigos">Artigos</h2>
+          <p class="painel-legenda">Aparecem na página Artigos do site, do mais novo para o mais antigo. Rascunhos ficam só aqui no painel.</p>
+        </div>
+        <a class="painel-acao" href="artigo.php"><?= icone('mais') ?>Novo artigo</a>
+      </header>
+<?php blocoDeAviso($aviso, 'artigos'); ?>
+
+<?php if (!$artigos): ?>
+      <p class="artigos-painel-vazio">Nenhum artigo ainda. Comece pelo botão “Novo artigo”.</p>
+<?php else: ?>
+      <ul class="artigos-lista">
+<?php foreach (artigosParaOPainel($artigos) as $artigo): ?>
+        <li>
+          <div class="artigo-item">
+            <a class="artigo-item-titulo" href="artigo.php?id=<?= e($artigo['id']) ?>"><?= e($artigo['titulo']) ?></a>
+            <span class="artigo-item-meta">
+              <?= e(dataPorExtenso($artigo['data'])) ?>
+              <span class="selo selo--<?= $artigo['publicado'] ? 'publicado' : 'rascunho' ?>"><?= $artigo['publicado'] ? 'No site' : 'Rascunho' ?></span>
+            </span>
+          </div>
+          <div class="artigo-item-acoes">
+<?php if ($artigo['publicado']): ?>
+            <a class="painel-link" href="../artigo-<?= e($artigo['slug']) ?>.html" target="_blank" rel="noopener"><?= icone('olho') ?>Ver</a>
+<?php endif; ?>
+            <a class="painel-link" href="artigo.php?id=<?= e($artigo['id']) ?>"><?= icone('editar') ?>Editar</a>
+          </div>
+        </li>
+<?php endforeach; ?>
+      </ul>
+<?php endif; ?>
     </section>
 
     <!-- Fotos ----------------------------------------------------------- -->

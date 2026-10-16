@@ -164,6 +164,76 @@
     formVitrine.addEventListener('input', atualizar);
   }
 
+  /* Artigo: prévia que acompanha a digitação -------------------------------
+     Mesmas regras de src/artigos.js e admin/inc/artigos.php, aqui só para
+     mostrar como vai ficar — quem publica de verdade é o PHP. */
+  const formArtigo = document.querySelector('form[data-artigo-form]');
+  if (formArtigo) {
+    const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',
+      'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const emLinha = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    const aparar = (s) => s.replace(/^[ \t]+|[ \t]+$/g, '');
+
+    const formatarTexto = function (corpo) {
+      const saida = [];
+      let tipo = null;
+      let bloco = [];
+      const fechar = function () {
+        if (!bloco.length) return;
+        if (tipo === 'p') saida.push('<p>' + bloco.map(emLinha).join('<br>') + '</p>');
+        if (tipo === 'ul') saida.push('<ul>' + bloco.map((i) => '<li>' + emLinha(i) + '</li>').join('') + '</ul>');
+        if (tipo === 'q') saida.push('<blockquote><p>' + bloco.map(emLinha).join('<br>') + '</p></blockquote>');
+        bloco = [];
+        tipo = null;
+      };
+      String(corpo || '').replace(/\r\n?/g, '\n').split('\n').forEach(function (original) {
+        const linha = aparar(original);
+        if (linha === '') { fechar(); return; }
+        if (linha.startsWith('### ')) { fechar(); saida.push('<h3>' + emLinha(aparar(linha.slice(4))) + '</h3>'); return; }
+        if (linha.startsWith('## ')) { fechar(); saida.push('<h2>' + emLinha(aparar(linha.slice(3))) + '</h2>'); return; }
+        let novo = 'p';
+        let conteudo = linha;
+        if (linha.startsWith('- ')) { novo = 'ul'; conteudo = aparar(linha.slice(2)); }
+        else if (linha.startsWith('> ')) { novo = 'q'; conteudo = aparar(linha.slice(2)); }
+        if (tipo !== novo) { fechar(); tipo = novo; }
+        bloco.push(conteudo);
+      });
+      fechar();
+      return saida.join('\n');
+    };
+
+    const porExtenso = function (iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      return m && MESES[Number(m[2]) - 1] ? `${Number(m[3])} de ${MESES[Number(m[2]) - 1]} de ${m[1]}` : '';
+    };
+
+    const alvo = (nome) => document.querySelector('[data-previa-alvo="' + nome + '"]');
+    const valor = (nome) => {
+      const campo = formArtigo.querySelector('[data-previa-campo="' + nome + '"]');
+      return campo ? campo.value : '';
+    };
+    const atualizar = function () {
+      const titulo = alvo('titulo');
+      const resumo = alvo('resumo');
+      const data = alvo('data');
+      const corpo = alvo('corpo');
+      if (titulo) titulo.textContent = valor('titulo').trim() || 'Título do artigo';
+      if (resumo) resumo.textContent = valor('resumo').trim();
+      if (data) data.textContent = porExtenso(valor('data'));
+      if (corpo) corpo.innerHTML = formatarTexto(valor('corpo'));
+    };
+    formArtigo.addEventListener('input', atualizar);
+
+    // Escolher uma capa nova desfaz o "Tirar a capa".
+    const capa = formArtigo.querySelector('input[name="capa"]');
+    const remover = formArtigo.querySelector('input[name="remover_capa"]');
+    if (capa && remover) {
+      capa.addEventListener('change', function () { if (capa.files.length) remover.checked = false; });
+    }
+  }
+
   /* Um envio por vez: o botão trava até a página responder, para um clique
      duplo não publicar duas vezes. */
   document.querySelectorAll('.app form, .auth-card form').forEach(function (form) {
