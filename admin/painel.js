@@ -12,7 +12,7 @@
      até lá. Por garantia — há navegador que restaura a rolagem antiga depois
      de um envio — a rolagem é refeita daqui, depois do primeiro quadro
      desenhado, quando a restauração já passou. */
-  const confirmacao = document.querySelector('.painel-bloco .painel-aviso');
+  const confirmacao = document.querySelector('.cartao .painel-aviso');
   if (confirmacao) {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     const mostrar = function () {
@@ -56,15 +56,30 @@
 
   document.querySelectorAll('input[type="file"][data-previa]').forEach(function (campo) {
     const previa = document.getElementById(campo.getAttribute('data-previa'));
+    const moldura = previa ? previa.closest('.foto-moldura') : null;
+    const selo = moldura ? moldura.querySelector('.foto-selo') : null;
+    const rotulo = document.querySelector('label[for="' + campo.id + '"] span');
     const situacao = document.getElementById(campo.id + '-situacao');
     const botao = campo.form ? campo.form.querySelector('button[type="submit"]') : null;
     const fotoAtual = previa ? previa.src : '';
+    const seloAtual = selo ? selo.textContent : '';
+    const rotuloAtual = rotulo ? rotulo.textContent : '';
     const dizer = function (texto) { if (situacao) situacao.textContent = texto; };
+
+    const marcarPrevia = function (arquivo) {
+      if (campo.form) campo.form.toggleAttribute('data-esperando', !arquivo);
+      if (moldura) moldura.toggleAttribute('data-previa', !!arquivo);
+      if (selo) selo.textContent = arquivo ? 'Prévia' : seloAtual;
+      if (rotulo) rotulo.textContent = arquivo ? arquivo.name : rotuloAtual;
+    };
+
+    if (campo.form) campo.form.setAttribute('data-esperando', '');
 
     campo.addEventListener('change', function () {
       const arquivo = campo.files && campo.files[0];
       if (!arquivo) {
-        if (previa) { previa.src = fotoAtual; previa.removeAttribute('data-previa'); }
+        if (previa) previa.src = fotoAtual;
+        marcarPrevia(null);
         dizer('');
         return;
       }
@@ -74,7 +89,8 @@
       }
 
       const endereco = URL.createObjectURL(arquivo);
-      if (previa) { previa.src = endereco; previa.setAttribute('data-previa', ''); }
+      if (previa) previa.src = endereco;
+      marcarPrevia(arquivo);
       dizer(AVISO_PREVIA);
 
       const imagem = new Image();
@@ -106,11 +122,51 @@
       };
       imagem.src = endereco;
     });
+
+    /* Arrastar a foto para cima da moldura: o mesmo que escolher. */
+    if (moldura && window.DataTransfer) {
+      const marcar = function (sim) { moldura.toggleAttribute('data-arrastando', sim); };
+      moldura.addEventListener('dragover', function (evento) {
+        evento.preventDefault();
+        marcar(true);
+      });
+      moldura.addEventListener('dragleave', function () { marcar(false); });
+      moldura.addEventListener('drop', function (evento) {
+        evento.preventDefault();
+        marcar(false);
+        const arquivo = evento.dataTransfer && evento.dataTransfer.files[0];
+        if (!arquivo) return;
+        const lista = new DataTransfer();
+        lista.items.add(arquivo);
+        campo.files = lista.files;
+        campo.dispatchEvent(new Event('change'));
+      });
+    }
   });
+
+  /* Vitrine: a miniatura do site acompanha o que se digita ----------------
+     Enquanto o formulário do contato está aberto, a vitrine mostra o texto
+     novo antes de salvar — é a resposta para "como vai ficar?". */
+  const formVitrine = document.querySelector('form[data-vitrine-form]');
+  if (formVitrine) {
+    const pegar = function (chave) {
+      const campo = formVitrine.querySelector('[data-vitrine="' + chave + '"]');
+      return campo ? campo.value.trim() : '';
+    };
+    const atualizar = function () {
+      document.querySelectorAll('[data-vitrine-campo]').forEach(function (alvo) {
+        alvo.textContent = pegar(alvo.getAttribute('data-vitrine-campo')) || '—';
+      });
+      document.querySelectorAll('[data-vitrine-rede]').forEach(function (rede) {
+        rede.hidden = !pegar(rede.getAttribute('data-vitrine-rede'));
+      });
+    };
+    formVitrine.addEventListener('input', atualizar);
+  }
 
   /* Um envio por vez: o botão trava até a página responder, para um clique
      duplo não publicar duas vezes. */
-  document.querySelectorAll('.painel form, .auth-card form').forEach(function (form) {
+  document.querySelectorAll('.app form, .auth-card form').forEach(function (form) {
     form.addEventListener('submit', function (evento) {
       if (evento.defaultPrevented) return;
       const botao = form.querySelector('button[type="submit"]');

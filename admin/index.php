@@ -153,32 +153,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* Leitura ------------------------------------------------------------------ */
-$pendentes = 0;
+$pendentes = [];
 foreach ($campos as $c) {
     $estado = estadoDoCampo($c, $dados[$c['chave']] ?? '');
     if ($estado === 'falta' || $estado === 'exemplo') {
-        $pendentes++;
+        $pendentes[] = $c;
     }
 }
 $numeros = ['Nenhuma', 'Uma', 'Duas', 'Três', 'Quatro', 'Cinco', 'Seis', 'Sete', 'Oito'];
-$resumo = $pendentes === 0
+$total = count($pendentes);
+$resumo = $total === 0
     ? 'Todas as informações de contato estão preenchidas.'
-    : ($pendentes === 1
+    : ($total === 1
         ? 'Uma informação de contato ainda precisa da sua atenção.'
-        : ($numeros[$pendentes] ?? (string) $pendentes) . ' informações de contato ainda precisam da sua atenção.');
+        : ($numeros[$total] ?? (string) $total) . ' informações de contato ainda precisam da sua atenção.');
 
 $aviso = retirarAviso();
 $publicacao = ultimaPublicacao();
 $n = contagens();
 $usuarios = carregarUsuarios();
 
+$hora = (int) date('G');
+$saudacao = $hora >= 5 && $hora < 12 ? 'Bom dia' : ($hora >= 12 && $hora < 18 ? 'Boa tarde' : 'Boa noite');
+
 /** Um campo de formulário do painel, com dica e erro. */
 function campoDoPainel(string $id, string $nome, string $rotulo, string $tipo, string $valor,
-                       ?string $dica, ?string $erro, string $extras = '', bool $opcional = false): void
+                       ?string $dica, ?string $erro, string $extras = '', bool $opcional = false,
+                       string $classe = ''): void
 {
     $descricao = trim(($dica ? $id . '-dica ' : '') . ($erro ? $id . '-erro' : ''));
     ?>
-        <div class="painel-campo"<?= $erro ? ' data-erro' : '' ?>>
+        <div class="painel-campo<?= $classe ? ' ' . e($classe) : '' ?>"<?= $erro ? ' data-erro' : '' ?>>
           <label for="<?= e($id) ?>"><?= e($rotulo) ?><?php if ($opcional): ?> <span class="painel-opcional">opcional</span><?php endif; ?></label>
           <input id="<?= e($id) ?>" name="<?= e($nome) ?>" type="<?= e($tipo) ?>" value="<?= e($valor) ?>"
                  <?= $extras ?><?= $descricao ? ' aria-describedby="' . e($descricao) . '"' : '' ?><?= $erro ? ' aria-invalid="true"' : '' ?>>
@@ -192,74 +197,126 @@ function campoDoPainel(string $id, string $nome, string $rotulo, string $tipo, s
 <?php
 }
 
+/** Valor como aparece na miniatura do site: vazio vira um traço. */
+function naVitrine(array $dados, string $chave): string
+{
+    $v = trim((string) ($dados[$chave] ?? ''));
+    return $v !== '' ? $v : '—';
+}
+
+/* Campos que ocupam a linha inteira na grade do contato. */
+$largos = ['endereco' => true];
+
 abrirPagina('Painel — Área administrativa', 'page-painel');
 ?>
-<header class="painel-bar">
-  <a class="painel-logo" href="../index.html">
-    <img src="../assets/img/logo.svg" alt="" width="30" height="30">
-    <span>Área administrativa</span>
-  </a>
-  <div class="painel-bar-acoes">
-    <span class="painel-quem"><?= e($eu) ?></span>
-    <a class="painel-link" href="../index.html">Ver o site</a>
-    <form method="post" action="sair.php">
-      <?= campoCsrf() ?>
-      <button type="submit" class="painel-link">Sair</button>
-    </form>
-  </div>
-</header>
+<div class="app">
 
-<main class="painel">
-  <h1>Painel</h1>
-  <p class="painel-resumo"><?= e($resumo) ?></p>
+  <aside class="app-lateral">
+    <a class="app-marca" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="40" height="40">
+      <span>
+        <strong>Dr. Bruno Kersten</strong>
+        <small>Área administrativa</small>
+      </span>
+    </a>
+
+    <nav class="app-nav" aria-label="Partes do painel">
+      <a href="index.php#contato"><?= icone('telefone') ?><span>Contato</span><?php if ($total): ?><span class="app-nav-conta" aria-label="<?= $total ?> pendente<?= $total > 1 ? 's' : '' ?>"><?= $total ?></span><?php endif; ?></a>
+      <a href="index.php#fotos"><?= icone('foto') ?><span>Fotos</span></a>
+      <a href="index.php#site"><?= icone('globo') ?><span>Publicação</span></a>
+      <a href="index.php#acessos"><?= icone('pessoas') ?><span>Acessos</span></a>
+    </nav>
+
+    <div class="app-usuario">
+      <span class="app-avatar" aria-hidden="true"><?= e(strtoupper(substr($eu, 0, 1))) ?></span>
+      <span class="app-email painel-quem"><?= e($eu) ?></span>
+      <form method="post" action="sair.php">
+        <?= campoCsrf() ?>
+        <button type="submit" class="app-sair" title="Sair do painel"><?= icone('sair') ?><span>Sair</span></button>
+      </form>
+    </div>
+  </aside>
+
+  <main class="app-principal">
+    <header class="app-topo">
+      <div>
+        <h1><?= e($saudacao) ?>.</h1>
+        <p class="app-subtitulo">Aqui você atualiza o contato e as fotos do site.</p>
+      </div>
+      <a class="painel-acao painel-acao--leve" href="../index.html" target="_blank" rel="noopener"><?= icone('abrir') ?>Ver o site</a>
+    </header>
 
 <?php blocoDeAviso($aviso); ?>
 <?php if (!empty($GLOBALS['erroDePublicacao'])): ?>
-  <p class="painel-aviso" data-tipo="erro" role="alert">
-    O site não pôde ser publicado: <?= e($GLOBALS['erroDePublicacao']) ?>
-  </p>
+    <p class="painel-aviso" data-tipo="erro" role="alert">
+      O site não pôde ser publicado: <?= e($GLOBALS['erroDePublicacao']) ?>
+    </p>
 <?php endif; ?>
 
-  <section class="painel-bloco" id="contato" aria-labelledby="tituloContato">
-    <h2 id="tituloContato">O que o site mostra hoje</h2>
-    <p class="painel-legenda">
-      Estes valores aparecem no rodapé de todas as páginas e na página de
-      contato. Mudar aqui muda em todas de uma vez.
-    </p>
+    <section class="app-situacao" data-estado="<?= $total ? 'pendente' : 'ok' ?>" aria-label="Situação do site">
+      <span class="app-situacao-ico"><?= icone($total ? 'alerta' : 'certo') ?></span>
+      <div>
+        <p class="painel-resumo"><?= e($resumo) ?></p>
+<?php if ($total): ?>
+        <p class="app-situacao-detalhe">
+          Ainda com texto de exemplo ou em branco:
+<?php foreach ($pendentes as $c): ?>
+          <a class="app-chip" href="index.php?editar#campo-<?= e($c['chave']) ?>"><?= e($c['rotulo']) ?></a>
+<?php endforeach; ?>
+        </p>
+<?php else: ?>
+        <p class="app-situacao-detalhe">O que os pacientes veem no site está completo.</p>
+<?php endif; ?>
+      </div>
+    </section>
+
+    <!-- Contato --------------------------------------------------------- -->
+    <section class="cartao" id="contato" aria-labelledby="tituloContato">
+      <header class="cartao-topo">
+        <span class="cartao-ico"><?= icone('telefone') ?></span>
+        <div>
+          <h2 id="tituloContato">Contato</h2>
+          <p class="painel-legenda">Aparece no rodapé de todas as páginas e na página de contato. Mudar aqui muda em todas de uma vez.</p>
+        </div>
+<?php if (!$editando): ?>
+        <a class="painel-acao" href="index.php?editar#contato"><?= icone('editar') ?>Editar</a>
+<?php endif; ?>
+      </header>
 <?php blocoDeAviso($aviso, 'contato'); ?>
 
+      <div class="contato-grade">
 <?php if (!$editando): ?>
-    <ul class="painel-lista">
+        <ul class="painel-lista">
 <?php foreach ($campos as $c):
     $valor = $dados[$c['chave']] ?? '';
     $estado = estadoDoCampo($c, $valor);
 ?>
-      <li class="painel-linha" data-estado="<?= e($estado) ?>">
-        <span class="painel-rotulo"><?= e($c['rotulo']) ?></span>
-        <span class="painel-valor"><?php
-            if ($estado === 'falta') {
-                echo 'falta preencher';
-            } elseif ($estado === 'vazio') {
-                echo 'não usado';
-            } else {
-                echo e(valorParaExibir($c, $valor));
-            }
-            if ($estado === 'exemplo') {
-                echo '<span class="painel-marca">ainda é exemplo</span>';
-            }
-        ?></span>
+          <li class="painel-linha<?= isset($largos[$c['chave']]) ? ' painel-linha--larga' : '' ?>" data-estado="<?= e($estado) ?>">
+            <span class="painel-rotulo"><?= e($c['rotulo']) ?></span>
+            <span class="painel-valor"><?php
+                if ($estado === 'falta') {
+                    echo 'falta preencher';
+                } elseif ($estado === 'vazio') {
+                    echo 'não usado';
+                } else {
+                    echo e(valorParaExibir($c, $valor));
+                }
+                if ($estado === 'exemplo') {
+                    echo '<span class="painel-marca">ainda é exemplo</span>';
+                }
+            ?></span>
 <?php if (!empty($c['nota']) && $estado !== 'ok'): ?>
-        <p class="painel-nota"><?= e($c['nota']) ?></p>
+            <p class="painel-nota"><?= e($c['nota']) ?></p>
 <?php endif; ?>
-      </li>
+          </li>
 <?php endforeach; ?>
-    </ul>
-    <a class="painel-acao" href="index.php?editar#contato">Editar estas informações</a>
+        </ul>
 
 <?php else: ?>
-    <form class="painel-form" method="post" action="index.php#contato" novalidate>
-      <?= campoCsrf() ?>
-      <input type="hidden" name="acao" value="salvar">
+        <form class="painel-form" method="post" action="index.php#contato" novalidate data-vitrine-form>
+          <?= campoCsrf() ?>
+          <input type="hidden" name="acao" value="salvar">
+          <div class="painel-form-grade">
 <?php foreach ($campos as $c):
     $valor = (string) ($valoresDoFormulario[$c['chave']] ?? '');
     if ($c['tipo'] === 'whatsapp' && !$errosDosDados) {
@@ -268,122 +325,194 @@ abrirPagina('Painel — Área administrativa', 'page-painel');
     $tipo = $c['tipo'] === 'link' ? 'url' : ($c['tipo'] === 'texto' ? 'text' : 'tel');
     $extras = 'autocomplete="off"' . ($tipo === 'tel' ? ' inputmode="tel"' : '')
         . (!empty($c['exemplo']) ? ' placeholder="' . e($c['exemplo']) . '"' : '')
-        . (!empty($c['obrigatorio']) ? ' required' : '');
+        . (!empty($c['obrigatorio']) ? ' required' : '')
+        . ' data-vitrine="' . e($c['chave']) . '"';
     campoDoPainel('campo-' . $c['chave'], $c['chave'], $c['rotulo'], $tipo, $valor,
-        $c['dica'] ?? null, $errosDosDados[$c['chave']] ?? null, $extras, !empty($c['opcional']));
+        $c['dica'] ?? null, $errosDosDados[$c['chave']] ?? null, $extras, !empty($c['opcional']),
+        isset($largos[$c['chave']]) ? 'painel-campo--largo' : '');
 endforeach; ?>
-      <div class="painel-form-acoes">
-        <button type="submit" class="painel-acao">Salvar e publicar</button>
-        <a class="painel-link" href="index.php#contato">Cancelar</a>
-      </div>
-    </form>
+          </div>
+          <div class="painel-form-acoes">
+            <button type="submit" class="painel-acao"><?= icone('certo') ?>Salvar e publicar</button>
+            <a class="painel-link" href="index.php#contato">Cancelar</a>
+          </div>
+        </form>
 <?php endif; ?>
-  </section>
 
-  <section class="painel-bloco" id="fotos" aria-labelledby="tituloFotos">
-    <h2 id="tituloFotos">Fotos</h2>
-    <p class="painel-legenda">
-      A foto enviada é cortada em retrato (3 × 4) e reduzida para carregar
-      rápido. Prefira uma com o rosto no terço de cima e fundo simples.
-    </p>
+        <!-- O mesmo bloco da página de contato, com as classes do site: o que
+             aparece aqui é o que o paciente vê. Durante a edição, acompanha o
+             que está sendo digitado. -->
+        <figure class="vitrine" aria-label="Como o contato aparece no site">
+          <figcaption>
+            Como aparece no site
+            <span class="vitrine-endereco">drbrunokersten.com.br/contato</span>
+          </figcaption>
+          <div class="vitrine-tela">
+            <div class="info-list">
+              <div class="info-item">
+                <span class="ico"><?= icone('local') ?></span>
+                <div>
+                  <h3>Consultório</h3>
+                  <p><span data-vitrine-campo="cidade"><?= e(naVitrine($dados, 'cidade')) ?></span>
+                    <small data-vitrine-campo="endereco"><?= e(naVitrine($dados, 'endereco')) ?></small></p>
+                </div>
+              </div>
+              <div class="info-item">
+                <span class="ico"><?= icone('telefone') ?></span>
+                <div>
+                  <h3>Telefone / WhatsApp</h3>
+                  <p data-vitrine-campo="telefone"><?= e(naVitrine($dados, 'telefone')) ?></p>
+                </div>
+              </div>
+              <div class="info-item">
+                <span class="ico"><?= icone('relogio') ?></span>
+                <div>
+                  <h3>Horário de atendimento</h3>
+                  <p data-vitrine-campo="horario"><?= e(naVitrine($dados, 'horario')) ?></p>
+                </div>
+              </div>
+            </div>
+            <div class="vitrine-redes" aria-label="Ícones do rodapé">
+<?php foreach (['whatsapp' => 'WhatsApp', 'instagram' => 'Instagram', 'facebook' => 'Facebook', 'linkedin' => 'LinkedIn'] as $rede => $nome): ?>
+              <span class="vitrine-rede"<?= trim((string) ($dados[$rede] ?? '')) === '' ? ' hidden' : '' ?> data-vitrine-rede="<?= e($rede) ?>" title="<?= e($nome) ?>"><?= icone($rede) ?></span>
+<?php endforeach; ?>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Fotos ----------------------------------------------------------- -->
+    <section class="cartao" id="fotos" aria-labelledby="tituloFotos">
+      <header class="cartao-topo">
+        <span class="cartao-ico"><?= icone('foto') ?></span>
+        <div>
+          <h2 id="tituloFotos">Fotos</h2>
+          <p class="painel-legenda">A foto enviada é cortada em retrato (3 × 4) e reduzida para carregar rápido. Prefira uma com o rosto no terço de cima e fundo simples.</p>
+        </div>
+      </header>
 <?php blocoDeAviso($aviso, 'fotos'); ?>
 
-    <ul class="painel-fotos">
+      <div class="fotos-grade">
 <?php foreach (fotos() as $foto):
     $trocada = fotoTrocada($foto, $dados);
     $id = 'foto-' . $foto['nome'];
 ?>
-      <li class="painel-foto">
-        <img id="<?= e($id) ?>-previa" class="painel-foto-imagem"
-             src="../<?= e(caminhoDaFoto($foto, $dados)) ?>"
-             alt="<?= e($foto['rotulo']) ?>, como está no site" width="120" height="160">
-        <div class="painel-foto-texto">
-          <span class="painel-valor"><?= e($foto['rotulo']) ?></span>
-          <p class="painel-nota">
-            <?= e($foto['onde']) ?>
-            <?= $trocada ? 'Enviada pelo painel.' : 'É a foto original do site.' ?>
-          </p>
+        <article class="foto-cartao">
+          <div class="foto-moldura" data-soltar="<?= e($id) ?>">
+            <img id="<?= e($id) ?>-previa" class="painel-foto-imagem"
+                 src="../<?= e(caminhoDaFoto($foto, $dados)) ?>"
+                 alt="<?= e($foto['rotulo']) ?>, como está no site" width="240" height="320">
+            <span class="foto-selo"><?= $trocada ? 'Enviada pelo painel' : 'Original do site' ?></span>
+            <span class="foto-soltar" aria-hidden="true"><?= icone('enviar') ?>Solte a foto aqui</span>
+          </div>
+          <div class="foto-texto">
+            <h3><?= e($foto['rotulo']) ?></h3>
+            <p class="painel-nota">
+              <?= e($foto['onde']) ?>
+              <?= $trocada ? 'Enviada pelo painel.' : 'É a foto original do site.' ?>
+            </p>
 
-          <form class="painel-foto-envio" method="post" action="index.php#fotos" enctype="multipart/form-data">
-            <?= campoCsrf() ?>
-            <input type="hidden" name="acao" value="foto">
-            <input type="hidden" name="foto" value="<?= e($foto['chave']) ?>">
-            <label class="painel-arquivo-rotulo" for="<?= e($id) ?>">Nova foto</label>
-            <input class="painel-arquivo" id="<?= e($id) ?>" type="file" name="arquivo"
-                   accept="image/jpeg,image/png,image/webp" required
-                   data-previa="<?= e($id) ?>-previa">
-            <p class="painel-dica painel-foto-situacao" id="<?= e($id) ?>-situacao" aria-live="polite"></p>
-            <div class="painel-form-acoes">
-              <button type="submit" class="painel-acao">Enviar foto</button>
-            </div>
-          </form>
+            <form class="painel-foto-envio" method="post" action="index.php#fotos" enctype="multipart/form-data">
+              <?= campoCsrf() ?>
+              <input type="hidden" name="acao" value="foto">
+              <input type="hidden" name="foto" value="<?= e($foto['chave']) ?>">
+              <input class="painel-arquivo" id="<?= e($id) ?>" type="file" name="arquivo"
+                     accept="image/jpeg,image/png,image/webp" required
+                     data-previa="<?= e($id) ?>-previa">
+              <label class="botao-arquivo" for="<?= e($id) ?>"><?= icone('foto') ?><span>Escolher foto</span></label>
+              <p class="painel-dica painel-foto-situacao" id="<?= e($id) ?>-situacao" aria-live="polite"></p>
+              <div class="painel-form-acoes">
+                <button type="submit" class="painel-acao"><?= icone('enviar') ?>Enviar foto</button>
+              </div>
+            </form>
 
 <?php if ($trocada): ?>
-          <form class="painel-foto-original" method="post" action="index.php#fotos"
-                data-confirmar="Voltar a usar a foto original do site no lugar da que foi enviada?">
-            <?= campoCsrf() ?>
-            <input type="hidden" name="acao" value="foto_original">
-            <input type="hidden" name="foto" value="<?= e($foto['chave']) ?>">
-            <button type="submit" class="painel-link">Voltar à foto original</button>
-          </form>
+            <form class="painel-foto-original" method="post" action="index.php#fotos"
+                  data-confirmar="Voltar a usar a foto original do site no lugar da que foi enviada?">
+              <?= campoCsrf() ?>
+              <input type="hidden" name="acao" value="foto_original">
+              <input type="hidden" name="foto" value="<?= e($foto['chave']) ?>">
+              <button type="submit" class="painel-link"><?= icone('desfazer') ?>Voltar à foto original</button>
+            </form>
+<?php endif; ?>
+          </div>
+        </article>
+<?php endforeach; ?>
+      </div>
+    </section>
+
+    <!-- Publicação ------------------------------------------------------ -->
+    <section class="cartao" id="site" aria-labelledby="tituloSite">
+      <header class="cartao-topo">
+        <span class="cartao-ico"><?= icone('globo') ?></span>
+        <div>
+          <h2 id="tituloSite">Publicação</h2>
+          <p class="painel-legenda">Depois de enviar um pacote novo para a hospedagem, basta abrir o painel: ele publica sozinho.</p>
+        </div>
+      </header>
+<?php blocoDeAviso($aviso, 'site'); ?>
+
+      <dl class="publicacao-numeros">
+        <div>
+          <dt>Páginas publicadas</dt>
+          <dd><?= (int) $n['paginas'] ?></dd>
+        </div>
+        <div>
+          <dt>Sobre tipos de câncer</dt>
+          <dd><?= (int) $n['canceres'] ?></dd>
+        </div>
+        <div>
+          <dt>Última publicação</dt>
+<?php if ($publicacao): ?>
+          <dd><?= e(date('d/m', (int) $publicacao['em'])) ?> <small>às <?= e(date('H:i', (int) $publicacao['em'])) ?></small></dd>
+<?php else: ?>
+          <dd><small>ainda não houve</small></dd>
 <?php endif; ?>
         </div>
-      </li>
-<?php endforeach; ?>
-    </ul>
-  </section>
+      </dl>
 
-  <section class="painel-bloco" id="site" aria-labelledby="tituloSite">
-    <h2 id="tituloSite">O site</h2>
-<?php blocoDeAviso($aviso, 'site'); ?>
-    <p class="painel-numeros">
-      <strong><?= (int) $n['paginas'] ?></strong> páginas publicadas, sendo
-      <strong><?= (int) $n['canceres'] ?></strong> sobre tipos de câncer.
-    </p>
-    <p class="painel-legenda">
-<?php if ($publicacao): ?>
-      Última publicação em <?= e(date('d/m/Y', (int) $publicacao['em'])) ?> às
-      <?= e(date('H:i', (int) $publicacao['em'])) ?>.
-<?php else: ?>
-      O site ainda não foi publicado por este painel.
-<?php endif; ?>
-      Depois de enviar um pacote novo para a hospedagem, basta abrir o painel:
-      ele publica sozinho.
-    </p>
-    <form class="painel-republicar" method="post" action="index.php#site">
-      <?= campoCsrf() ?>
-      <input type="hidden" name="acao" value="publicar">
-      <button type="submit" class="painel-acao painel-acao--leve">Publicar de novo</button>
-    </form>
-  </section>
+      <form class="painel-republicar" method="post" action="index.php#site">
+        <?= campoCsrf() ?>
+        <input type="hidden" name="acao" value="publicar">
+        <button type="submit" class="painel-acao painel-acao--leve"><?= icone('atualizar') ?>Publicar de novo</button>
+      </form>
+    </section>
 
-  <section class="painel-bloco" id="acessos" aria-labelledby="tituloAcessos">
-    <h2 id="tituloAcessos">Acessos</h2>
-    <p class="painel-legenda">Quem consegue entrar neste painel.</p>
+    <!-- Acessos --------------------------------------------------------- -->
+    <section class="cartao" id="acessos" aria-labelledby="tituloAcessos">
+      <header class="cartao-topo">
+        <span class="cartao-ico"><?= icone('pessoas') ?></span>
+        <div>
+          <h2 id="tituloAcessos">Acessos</h2>
+          <p class="painel-legenda">Quem consegue entrar neste painel.</p>
+        </div>
+      </header>
 <?php blocoDeAviso($aviso, 'acessos'); ?>
 
-    <ul class="painel-acessos">
+      <ul class="painel-acessos">
 <?php foreach (array_keys($usuarios) as $email): ?>
-      <li>
-        <span><?= e($email) ?><?php if ($email === $eu): ?><span class="painel-voce">você</span><?php endif; ?></span>
+        <li>
+          <span class="acesso-avatar" aria-hidden="true"><?= e(strtoupper(substr($email, 0, 1))) ?></span>
+          <span class="acesso-email"><?= e($email) ?><?php if ($email === $eu): ?><span class="painel-voce">você</span><?php endif; ?></span>
 <?php if ($email !== $eu): ?>
-        <form method="post" action="index.php#acessos"
-              data-confirmar="Remover o acesso de <?= e($email) ?>? A pessoa sai do painel na hora.">
-          <?= campoCsrf() ?>
-          <input type="hidden" name="acao" value="acesso_remover">
-          <input type="hidden" name="email" value="<?= e($email) ?>">
-          <button type="submit" class="painel-link">Remover</button>
-        </form>
+          <form method="post" action="index.php#acessos"
+                data-confirmar="Remover o acesso de <?= e($email) ?>? A pessoa sai do painel na hora.">
+            <?= campoCsrf() ?>
+            <input type="hidden" name="acao" value="acesso_remover">
+            <input type="hidden" name="email" value="<?= e($email) ?>">
+            <button type="submit" class="painel-link painel-link--perigo"><?= icone('lixeira') ?>Remover</button>
+          </form>
 <?php endif; ?>
-      </li>
+        </li>
 <?php endforeach; ?>
-    </ul>
+      </ul>
 
-    <details class="painel-gaveta"<?= $gavetaAberta === 'acesso' ? ' open' : '' ?>>
-      <summary>Adicionar acesso ou trocar a senha de alguém</summary>
-      <form method="post" action="index.php#acessos" novalidate>
-        <?= campoCsrf() ?>
-        <input type="hidden" name="acao" value="acesso_novo">
+      <details class="painel-gaveta"<?= $gavetaAberta === 'acesso' ? ' open' : '' ?>>
+        <summary><?= icone('mais') ?>Adicionar acesso ou trocar a senha de alguém</summary>
+        <form method="post" action="index.php#acessos" novalidate>
+          <?= campoCsrf() ?>
+          <input type="hidden" name="acao" value="acesso_novo">
 <?php
 campoDoPainel('acesso-email', 'email', 'E-mail', 'email', $emailDoNovoAcesso,
     'Se o e-mail já tiver acesso, a senha dele passa a ser esta — serve para quem esqueceu a senha.',
@@ -394,17 +523,17 @@ campoDoPainel('acesso-senha', 'senha', 'Senha', 'password', '',
 campoDoPainel('acesso-confirmacao', 'confirmacao', 'Repita a senha', 'password', '',
     null, null, 'autocomplete="new-password" required');
 ?>
-        <div class="painel-form-acoes">
-          <button type="submit" class="painel-acao">Salvar acesso</button>
-        </div>
-      </form>
-    </details>
+          <div class="painel-form-acoes">
+            <button type="submit" class="painel-acao">Salvar acesso</button>
+          </div>
+        </form>
+      </details>
 
-    <details class="painel-gaveta"<?= $gavetaAberta === 'senha' ? ' open' : '' ?>>
-      <summary>Trocar minha senha</summary>
-      <form method="post" action="index.php#acessos" novalidate>
-        <?= campoCsrf() ?>
-        <input type="hidden" name="acao" value="senha">
+      <details class="painel-gaveta"<?= $gavetaAberta === 'senha' ? ' open' : '' ?>>
+        <summary><?= icone('chave') ?>Trocar minha senha</summary>
+        <form method="post" action="index.php#acessos" novalidate>
+          <?= campoCsrf() ?>
+          <input type="hidden" name="acao" value="senha">
 <?php
 campoDoPainel('senha-atual', 'atual', 'Senha atual', 'password', '', null,
     $errosDaGaveta['atual'] ?? null, 'autocomplete="current-password" required');
@@ -413,21 +542,22 @@ campoDoPainel('senha-nova', 'nova', 'Senha nova', 'password', '', 'Pelo menos 8 
 campoDoPainel('senha-confirmacao', 'confirmacao', 'Repita a senha nova', 'password', '', null, null,
     'autocomplete="new-password" required');
 ?>
-        <div class="painel-form-acoes">
-          <button type="submit" class="painel-acao">Trocar senha</button>
-        </div>
-      </form>
-    </details>
-  </section>
+          <div class="painel-form-acoes">
+            <button type="submit" class="painel-acao">Trocar senha</button>
+          </div>
+        </form>
+      </details>
+    </section>
 
-  <section class="painel-bloco painel-bloco--fim">
-    <h2>O que não se edita por aqui</h2>
-    <p>
-      O texto das páginas e o conteúdo clínico dos tipos de câncer ficam no
-      código do site. Para alterar qualquer um dos dois, fale com quem cuida
-      da parte técnica.
-    </p>
-  </section>
-</main>
+    <aside class="app-rodape">
+      <?= icone('info') ?>
+      <p>
+        O texto das páginas e o conteúdo clínico dos tipos de câncer ficam no
+        código do site. Para alterar qualquer um dos dois, fale com quem cuida
+        da parte técnica.
+      </p>
+    </aside>
+  </main>
+</div>
 <?php
 fecharPagina();
