@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css?v=175403b1">
+  <link rel="stylesheet" href="assets/css/styles.css?v=edf93fb5">
 
 </head>
 <body class="page-cancer-paratireoide">
@@ -135,14 +135,10 @@
 
       <div class="nav-mobile-extra">
         <a href="contato.html" class="btn btn--primary btn--block">Entre em contato</a>
-        <a href="admin/" rel="nofollow" class="nav-admin-mobile">Área administrativa</a>
       </div>
     </nav>
 
     <div class="header-actions">
-      <!-- Acesso da equipe. rel="nofollow" e a página com noindex: não é
-           conteúdo para quem visita o site. -->
-      <a class="admin-link" href="admin/" rel="nofollow" title="Área administrativa">Admin</a>
       <button type="button" class="search-toggle" id="searchToggle" aria-expanded="false" aria-controls="searchPanel" aria-label="Abrir busca no site">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       </button>
@@ -325,7 +321,10 @@
     </div>
 
     <div class="footer-bottom">
-      <p>© 2026 Dr. Bruno Kersten — Oncologia. Todos os direitos reservados.</p>
+      <!-- Acesso da equipe ao painel. Discreto de propósito: mesma cor do texto
+           em volta, sem sublinhado, só se destaca com o mouse ou o teclado. -->
+      <p>© 2026 Dr. Bruno Kersten — Oncologia. Todos os direitos reservados.
+        <a class="footer-restrito" href="admin/" rel="nofollow">Admin</a></p>
       <p>Site institucional de caráter informativo — não substitui atendimento médico.</p>
     </div>
   </div>
