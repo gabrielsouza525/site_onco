@@ -118,7 +118,8 @@ for (const p of paginas) {
     const alvo = m[1];
     if (/^(https?:|mailto:|tel:|data:|#$)/.test(alvo)) continue;
     total += 1;
-    const [arquivo, frag] = alvo.split('#');
+    // "?v=…" é a assinatura de versão do endereço, não parte do nome do arquivo.
+    const [arquivo, frag] = alvo.replace(/\?[^#]*/, '').split('#');
     const destino = arquivo || p;
     if (!fs.existsSync(path.join(ROOT, destino))) {
       quebrados.push(`${p} -> ${alvo} (arquivo inexistente)`);

@@ -7,6 +7,19 @@
 
 declare(strict_types=1);
 
+/**
+ * Endereço do arquivo com a assinatura do conteúdo: "painel.css?v=3fa2c1d0".
+ * A hospedagem manda o navegador guardar CSS e JS por 7 dias sem perguntar
+ * de novo; sem isto, quem já abriu o painel continuaria vendo o visual antigo
+ * depois de um pacote novo. Mudou o arquivo, muda o endereço.
+ */
+function comVersao(string $endereco): string
+{
+    $arquivo = ADMIN_DIR . '/' . $endereco;
+    $assinatura = is_file($arquivo) ? substr((string) md5_file($arquivo), 0, 8) : '';
+    return $assinatura !== '' ? $endereco . '?v=' . $assinatura : $endereco;
+}
+
 function abrirPagina(string $titulo, string $classe): void
 {
     ?><!DOCTYPE html>
@@ -22,8 +35,8 @@ function abrirPagina(string $titulo, string $classe): void
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/styles.css">
-  <link rel="stylesheet" href="painel.css">
+  <link rel="stylesheet" href="<?= e(comVersao('../assets/css/styles.css')) ?>">
+  <link rel="stylesheet" href="<?= e(comVersao('painel.css')) ?>">
 </head>
 <body class="<?= e($classe) ?>">
 <?php
@@ -33,8 +46,8 @@ function fecharPagina(): void
 {
     // main.js traz a máscara de telefone; painel.js, o resto do painel.
     ?>
-<script src="../assets/js/main.js" defer></script>
-<script src="painel.js" defer></script>
+<script src="<?= e(comVersao('../assets/js/main.js')) ?>" defer></script>
+<script src="<?= e(comVersao('painel.js')) ?>" defer></script>
 </body>
 </html>
 <?php

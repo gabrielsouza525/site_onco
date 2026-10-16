@@ -15,6 +15,7 @@
  * hospedagem, que aplica os dados salvos lá. Ver scripts/pacote.js.
  */
 
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
@@ -454,6 +455,18 @@ function applyTemplate(template, values) {
   );
 }
 
+/**
+ * Assinatura do conteúdo de um arquivo, para o endereço dele: styles.css?v=…
+ * A hospedagem manda o navegador guardar CSS e JS por 7 dias sem perguntar de
+ * novo; com a assinatura, um arquivo alterado ganha endereço novo e chega na
+ * hora. A quebra de linha é normalizada para a assinatura sair igual no
+ * Windows (CRLF) e no Linux do GitHub Actions (LF).
+ */
+function assinatura(relativo) {
+  const conteudo = fs.readFileSync(path.join(ROOT, relativo), 'utf8').replace(/\r\n/g, '\n');
+  return crypto.createHash('md5').update(conteudo).digest('hex').slice(0, 8);
+}
+
 /** Marca no menu o item correspondente à página atual. */
 function markActiveNav(html, nav) {
   if (!nav) return html.replace(/ data-nav="[\w-]+"/g, '');
@@ -497,6 +510,15 @@ function build({ modelos } = {}) {
 
   if (modelos) fs.mkdirSync(modelos, { recursive: true });
 
+  // O índice da busca sai primeiro: a assinatura dele vai no endereço que as
+  // páginas usam.
+  const indexed = buildSearchIndex();
+  const versoes = {
+    V_CSS: assinatura('assets/css/styles.css'),
+    V_JS: assinatura('assets/js/main.js'),
+    V_BUSCA: assinatura('assets/js/search-index.js'),
+  };
+
   let built = 0;
   for (const page of PAGES) {
     // Páginas com `content` são montadas em memória (tipos de câncer); as demais
@@ -529,6 +551,7 @@ function build({ modelos } = {}) {
       FOOTER: footer,
       YEAR: String(new Date().getFullYear()),
       NOINDEX: page.indexable === false ? '\n  <meta name="robots" content="noindex">' : '',
+      ...versoes,
     });
 
     fs.writeFileSync(path.join(ROOT, `${page.slug}.html`), aplicarTokensSite(modelo));
@@ -551,7 +574,6 @@ function build({ modelos } = {}) {
     removidas += 1;
   }
 
-  const indexed = buildSearchIndex();
   console.log(
     `✓ ${built} páginas geradas${removidas ? ` · ${removidas} órfãs removidas` : ''} · ${indexed} itens no índice de busca`
   );
