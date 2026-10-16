@@ -20,15 +20,15 @@ final fica versionado na raiz do repositório.
 ├── atuacao.html
 ├── jornada.html
 ├── prevencao.html
-├── noticias.html
-├── artigo-campanhas.html
-├── artigo-tratamentos.html
-├── artigo-psico-oncologia.html
+├── direitos.html
+├── tipos-de-cancer.html          ← + uma página por tipo (cancer-*.html)
 ├── contato.html
 ├── busca.html
 ├── 404.html
 │
 ├── build.js                      ← gerador (Node, sem dependências)
+├── scripts/pacote.js             ← monta o zip para a hospedagem
+├── admin/                        ← painel administrativo (PHP)
 ├── src/
 │   ├── layout.html               ← esqueleto <head>/<body> comum
 │   ├── partials/
@@ -66,8 +66,11 @@ Abra <http://localhost:8080>. Abrir os arquivos direto pelo `file://` também fu
 
 ## Publicação
 
-Qualquer hospedagem estática serve. No GitHub Pages, basta apontar para a raiz da branch —
-as páginas já estão versionadas. O arquivo `404.html` é reconhecido automaticamente.
+O site oficial fica na hospedagem do domínio **drbrunokersten.com.br** (DirectAdmin), com o
+painel administrativo em PHP. Veja [Painel administrativo e hospedagem](#painel-administrativo-e-hospedagem).
+
+A cópia no GitHub Pages continua funcionando como vitrine do repositório, mas sem painel:
+lá o PHP não roda.
 
 ---
 
@@ -107,51 +110,111 @@ o envio.
 - Única requisição externa: as fontes do Google Fonts (Poppins e Open Sans). Se preferir um
   site 100% autocontido, hospede as fontes localmente e remova o `<link>` de `src/layout.html`.
 
-## Editar o site sem mexer em código
+## Painel administrativo e hospedagem
 
-O painel fica em `/admin/` e usa o [Decap CMS](https://decapcms.org). Ele grava
-direto nos arquivos de `src/` e faz um commit; o workflow
-`.github/workflows/build.yml` roda o `build.js`, regenera o HTML e o GitHub
-Pages republica. Nenhum passo manual.
+O painel fica em **`/admin/`** e é escrito em PHP, sem banco de dados. Ele edita
+os dados de contato (telefone, WhatsApp, endereço, horário e redes) e troca as
+duas fotos do médico (página inicial e página Sobre). Publica na hora: salvou, o
+site já mostra.
 
-### O que já dá para editar
+### Como funciona
 
-**Contato e redes** (`src/data/site.json`) — telefone, endereço, cidade,
-horário e os perfis sociais. Esses valores entram em todas as páginas de uma
-vez, via tokens `{{TELEFONE}}`, `{{ENDERECO}}`, `{{HORARIO}}` e afins,
-resolvidos no build. Uma rede deixada em branco vira `#`.
+As páginas continuam sendo HTML estático. O pacote enviado à hospedagem traz as
+páginas prontas e também cada página como **modelo**, com `{{TELEFONE}}` e afins
+no lugar dos dados. O painel guarda os dados e regrava o HTML final na raiz do
+site, aplicando os valores salvos nele.
 
-### O que ainda não dá
+Daí saem três garantias:
 
-O texto das páginas mora em `src/pages/*.html` e os tipos de câncer em
-`src/data/cancers.js`. O Decap só edita YAML, JSON, TOML ou markdown com
-front-matter — HTML cru e módulo JavaScript não entram. Para abrir esse
-conteúdo ao painel seria preciso convertê-lo para markdown e ensinar o
-`build.js` a renderizá-lo.
+- **O site funciona assim que o zip é extraído**, mesmo numa `public_html`
+  vazia: as páginas prontas vêm no pacote.
+- **Um pacote novo não apaga o que foi salvo pelo painel**: os dados ficam na
+  pasta de dados, fora do zip, e o painel volta a aplicá-los na primeira vez
+  que é aberto depois do envio. Até lá, as páginas mostram os dados do
+  repositório.
+- **Se o PHP falhar, o site continua no ar**: as páginas já gravadas são HTML
+  comum. Só o painel para.
+- **O painel gera o mesmo HTML que o `build.js`**: a regra que aplica os dados
+  existe nos dois (`TOKENS_SITE` no `build.js`, `tokensDoSite()` em
+  `admin/inc/nucleo.php`). Mudou num, muda no outro.
 
-### Autenticação — o que falta para publicar
+Os dados, as senhas e as sessões ficam na pasta `painel-dados`, **ao lado** da
+`public_html` — fora do alcance do navegador. Se a hospedagem não deixar criar
+pasta ali, o painel usa `admin/dados`, protegida por `.htaccess`.
 
-O backend `github` precisa de um servidor de OAuth para trocar o código de
-login por um token de acesso, e o **GitHub Pages não tem servidor**. Enquanto
-isso não for resolvido, o painel funciona **apenas na máquina de quem edita**:
+### Fotos
+
+A foto enviada é cortada em retrato 3×4 (puxando o corte para cima, onde costuma
+estar o rosto), reduzida para 880×1173 e regravada em JPEG. Regravar descarta o
+que vinha escondido no arquivo, como a localização GPS que o celular anota. No
+navegador, fotos grandes são reduzidas antes de subir, para não esbarrar no
+limite de envio da hospedagem.
+
+O original fica em `painel-dados/fotos` e é copiado para `public_html/fotos` a
+cada publicação. Essa pasta não vem no pacote, então um pacote novo não volta a
+foto antiga. O nome do arquivo leva um pedaço do hash: foto nova, endereço novo,
+sem cache mostrando a anterior. Os endereços das fotos entram nas páginas pelos
+tokens `{{FOTO_INICIO}}` e `{{FOTO_SOBRE}}`.
+
+O painel precisa da extensão GD do PHP; sem ela, ele avisa e não troca a foto.
+
+### Publicar uma versão nova
 
 ```bash
-npx decap-server      # em um terminal
-npm start             # em outro
+npm run pacote
 ```
 
-Depois abra <http://localhost:8080/admin/>.
+Gera `pacote/site-drbrunokersten.zip`. Na hospedagem:
 
-Para o painel funcionar no site publicado, há dois caminhos:
+1. No gerenciador de arquivos do DirectAdmin, abra `domains/drbrunokersten.com.br/public_html`.
+2. Envie o zip e use **Extrair** ali mesmo, sobrescrevendo o que existir.
+3. Apague o zip.
+4. **Abra `drbrunokersten.com.br/admin/` uma vez.** O site já funciona antes
+   disso, mas é nesse momento que o painel reaplica o telefone, o WhatsApp e as
+   fotos salvos nele.
 
-1. **Publicar o site na Netlify ou na Cloudflare Pages** em vez do GitHub
-   Pages. As duas oferecem autenticação e funções de servidor no plano
-   gratuito, e o Decap passa a funcionar direto. Como o site é estático, a
-   migração é simples.
-2. **Manter o GitHub Pages e subir um proxy de OAuth** próprio (uma função na
-   Cloudflare ou na Vercel), apontando `base_url` no `admin/config.yml` para
-   ele. Evite proxies públicos de terceiros: eles recebem permissão de escrita
-   no repositório.
+### Primeiro acesso e senha esquecida
+
+Não existe senha padrão. O primeiro acesso só pode ser criado por quem entra na
+hospedagem:
+
+1. Crie um arquivo vazio chamado `liberar-cadastro.txt` na pasta `painel-dados`
+   (ao lado da `public_html`). A tela de criar acesso mostra o caminho exato.
+2. Abra `/admin/criar-acesso.php` e escolha e-mail e senha.
+
+O arquivo vale por 2 horas e é apagado assim que o acesso é criado. O mesmo
+caminho serve para quem esqueceu a senha e não tem mais ninguém com acesso. Com
+alguém dentro do painel, novos acessos e senhas novas se resolvem na parte
+**Acessos**.
+
+### Segurança
+
+- Senhas com `password_hash`; nada guardado em texto.
+- Todo formulário leva um token da sessão (CSRF).
+- Depois de 5 tentativas erradas, o aparelho fica 15 minutos sem poder tentar. O
+  IP é guardado como hash.
+- Acesso removido cai na hora, mesmo para quem está com o painel aberto.
+- "Manter conectado" desmarcado: a sessão termina ao fechar o navegador (e, de
+  qualquer forma, em 12 horas).
+
+### Testar na própria máquina
+
+Com PHP instalado (o do XAMPP serve):
+
+```bash
+npm run pacote
+# extraia o zip numa pasta de teste, por exemplo teste/public_html
+php -S localhost:8090 -t teste/public_html
+```
+
+E abra <http://localhost:8090/admin/>. A pasta de dados será criada em
+`teste/painel-dados`.
+
+### O que não se edita pelo painel
+
+O texto das páginas (`src/pages/*.html`) e os tipos de câncer
+(`src/data/cancers.js`) continuam no código: muda-se no repositório, roda-se
+`npm run pacote` e envia-se o zip.
 
 ## Formulários de contato
 
@@ -163,9 +226,9 @@ Foi a saída possível — e a mais honesta — para um site estático, que não
 servidor para receber envios. O texto não passa por lugar nenhum além do
 navegador de quem escreve.
 
-Para funcionar, preencha o campo **WhatsApp** em `src/data/site.json` (ou pelo
-painel, em *Contato e redes*) com o número em formato internacional. Pode
-digitar com máscara — o build extrai só os dígitos:
+Para funcionar, preencha o campo **WhatsApp** pelo painel (`/admin/`). No
+repositório, o valor inicial fica em `src/data/site.json`, em formato
+internacional; pode ter máscara — o build extrai só os dígitos:
 
 ```json
 { "whatsapp": "+55 (18) 99123-4567" }
