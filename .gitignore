@@ -8,3 +8,14 @@ desktop.ini
 
 # Ferramentas locais
 .claude/
+
+# Pacote para a hospedagem (npm run pacote) — gerado, não versionado.
+pacote/
+
+# Dados do painel PHP: senhas, sessões e o que foi salvo nele. Ficam só na
+# hospedagem; aqui só entram os .htaccess que protegem as pastas.
+admin/dados/*
+!admin/dados/.htaccess
+admin/modelos/*
+!admin/modelos/.htaccess
+painel-dados/

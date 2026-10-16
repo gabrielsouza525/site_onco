@@ -8,6 +8,11 @@
  * (GitHub Pages, Netlify, S3, hospedagem tradicional) sem dependências.
  *
  * Uso: npm run build   (ou: node build.js)
+ *
+ * Os dados de contato (src/data/site.json) entram por último, sobre a página
+ * já montada. Até esse ponto ela é um "modelo", com {{TELEFONE}} e afins no
+ * lugar dos valores — e é esse modelo que vai para o painel em PHP da
+ * hospedagem, que aplica os dados salvos lá. Ver scripts/pacote.js.
  */
 
 const fs = require('fs');
@@ -16,7 +21,8 @@ const path = require('path');
 const ROOT = __dirname;
 const SRC = path.join(ROOT, 'src');
 const CANCERS = require('./src/data/cancers');
-// Dados de contato e redes, editaveis pelo CMS sem mexer em codigo.
+// Dados de contato e redes. Na hospedagem quem manda é o painel; este
+// arquivo é o ponto de partida e o que aparece no GitHub Pages.
 const SITE = require('./src/data/site.json');
 
 /* --------------------------------------------------------------------------
@@ -114,15 +120,6 @@ const PAGES = [
     keywords: 'contato agendar consulta telefone whatsapp endereço horário araçatuba consultório localização',
   },
   {
-    slug: 'login',
-    nav: null,
-    bare: true,
-    title: 'Entrar — Área administrativa | Dr. Bruno Kersten',
-    description: 'Acesso restrito à equipe responsável pelo conteúdo do site.',
-    indexable: false,
-    section: 'Área administrativa',
-  },
-  {
     slug: 'busca',
     nav: null,
     title: 'Busca no site | Dr. Bruno Kersten',
@@ -150,8 +147,13 @@ const PAGES = [
 const TOKEN_SELETOR = '{{SELETOR_CANCER}}';
 
 /* Tokens preenchidos a partir de src/data/site.json. Uma rede social sem
-   endereco vira '#', para o link nao apontar para lugar nenhum. */
-const rede = (v) => (v && v.trim()) ? v.trim() : '#';
+   endereco vira '#', e o CSS esconde o ícone dela no rodapé.
+
+   ATENÇÃO: admin/inc/nucleo.php (tokensDoSite) repete esta mesma regra em
+   PHP, para o painel da hospedagem gerar exatamente o mesmo HTML. Mudou
+   aqui, muda lá. */
+const rede = (v) => (v && String(v).trim()) ? String(v).trim() : '#';
+const digitosWhatsapp = String(SITE.whatsapp || '').replace(/\D/g, '');
 const TOKENS_SITE = {
   TELEFONE: SITE.telefone || '',
   ENDERECO: SITE.endereco || '',
@@ -162,14 +164,21 @@ const TOKENS_SITE = {
   LINKEDIN: rede(SITE.linkedin),
   // O campo guarda so os digitos (ex.: 5518991234567). Daqui saem duas
   // coisas: o link do icone no rodape e o numero que os formularios usam.
-  WHATSAPP: SITE.whatsapp ? `https://wa.me/${String(SITE.whatsapp).replace(/\D/g, '')}` : '#',
-  WHATSAPP_NUMERO: SITE.whatsapp ? String(SITE.whatsapp).replace(/\D/g, '') : '',
+  WHATSAPP: digitosWhatsapp ? `https://wa.me/${digitosWhatsapp}` : '#',
+  WHATSAPP_NUMERO: digitosWhatsapp,
 };
+
+/* Os valores vêm de um formulário (o painel), então entram escapados — em
+   texto e em atributo entre aspas duplas. Mesmo conjunto do htmlspecialchars
+   com ENT_COMPAT, que o PHP usa. */
+const escHtml = (s) => String(s)
+  .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+  .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Troca os {{TOKENS}} do site, sem tocar nos demais. */
 function aplicarTokensSite(html) {
   return html.replace(/\{\{([A-Z_]+)\}\}/g, (m, k) =>
-    Object.prototype.hasOwnProperty.call(TOKENS_SITE, k) ? TOKENS_SITE[k] : m
+    Object.prototype.hasOwnProperty.call(TOKENS_SITE, k) ? escHtml(TOKENS_SITE[k]) : m
   );
 }
 
@@ -466,16 +475,23 @@ window.SEARCH_INDEX = ${JSON.stringify(entries, null, 2)};
   return entries.length;
 }
 
-function build() {
+/**
+ * Gera o site na raiz do projeto. Com `modelos`, grava também, nessa pasta,
+ * cada página antes de receber os dados de contato — é o que o painel PHP
+ * usa para publicar. Ver scripts/pacote.js.
+ */
+function build({ modelos } = {}) {
   const layout = read(path.join(SRC, 'layout.html'));
   // Layout sem cabeçalho e rodapé, para telas que ocupam a janela inteira.
   const layoutBare = read(path.join(SRC, 'layout-bare.html'));
-  const header = aplicarTokensSite(read(path.join(SRC, 'partials', 'header.html')));
+  const header = read(path.join(SRC, 'partials', 'header.html'));
   // O rodapé é resolvido antes de entrar no layout: o conteúdo injetado não é
-  // reprocessado pelo template, então {{YEAR}} precisa ser aplicado aqui.
-  const footer = applyTemplate(aplicarTokensSite(read(path.join(SRC, 'partials', 'footer.html'))), {
-    YEAR: String(new Date().getFullYear()),
-  });
+  // reprocessado pelo template, então {{YEAR}} precisa ser aplicado aqui. Só
+  // ele: os tokens de contato ficam para o fim.
+  const footer = read(path.join(SRC, 'partials', 'footer.html'))
+    .split('{{YEAR}}').join(String(new Date().getFullYear()));
+
+  if (modelos) fs.mkdirSync(modelos, { recursive: true });
 
   let built = 0;
   for (const page of PAGES) {
@@ -490,7 +506,7 @@ function build() {
         console.warn(`  ! ignorada: src/pages/${page.slug}.html não existe`);
         continue;
       }
-      corpo = aplicarTokensSite(read(pageFile).trimEnd());
+      corpo = read(pageFile).trimEnd();
       // Único token aceito no conteúdo das páginas: o seletor de tipo de câncer,
       // que precisa ser gerado a partir dos dados. Substituição por função para
       // que cifrões no HTML gerado não sejam interpretados.
@@ -499,7 +515,7 @@ function build() {
       }
     }
 
-    const html = applyTemplate(page.bare ? layoutBare : layout, {
+    const modelo = applyTemplate(page.bare ? layoutBare : layout, {
       TITLE: page.title,
       DESCRIPTION: page.description,
       HEAD_EXTRA: page.headExtra || '',
@@ -511,7 +527,8 @@ function build() {
       NOINDEX: page.indexable === false ? '\n  <meta name="robots" content="noindex">' : '',
     });
 
-    fs.writeFileSync(path.join(ROOT, `${page.slug}.html`), html);
+    fs.writeFileSync(path.join(ROOT, `${page.slug}.html`), aplicarTokensSite(modelo));
+    if (modelos) fs.writeFileSync(path.join(modelos, `${page.slug}.html`), modelo);
     built += 1;
   }
 
@@ -536,4 +553,6 @@ function build() {
   );
 }
 
-build();
+module.exports = { build };
+
+if (require.main === module) build();

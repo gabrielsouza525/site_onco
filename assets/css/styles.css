@@ -1589,6 +1589,8 @@ button { cursor: pointer; }
   transition: background-color .2s ease, border-color .2s ease, color .2s ease;
 }
 .social-row a:hover { background: var(--orange); border-color: var(--orange); color: #fff; }
+/* Rede sem endereço cadastrado no painel: o link sairia para lugar nenhum. */
+.social-row a[href="#"] { display: none; }
 .social-row svg { width: 17px; height: 17px; }
 
 .footer-bottom {
@@ -1800,7 +1802,8 @@ button { cursor: pointer; }
 /* --------------------------------------------------------------------------
    19. Tela de acesso (área administrativa)
    Layout em duas colunas: marca à esquerda, formulário à direita.
-   Usa o layout-bare — sem cabeçalho nem rodapé do site.
+   Usada pelo painel em PHP (admin/entrar.php e admin/criar-acesso.php),
+   que completa o visual com admin/painel.css.
    -------------------------------------------------------------------------- */
 .page-login { background: #0d1420; }
 
