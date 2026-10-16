@@ -56,6 +56,8 @@ fs.writeFileSync(
   JSON.stringify({ versao, gerado: agora.toISOString() }, null, 2) + '\n'
 );
 fs.copyFileSync(path.join(ROOT, 'src', 'data', 'site.json'), path.join(modelos, 'site-inicial.json'));
+// Artigos iniciais: valem até o painel salvar a primeira lista própria.
+fs.copyFileSync(path.join(ROOT, 'src', 'data', 'artigos.json'), path.join(modelos, 'artigos-inicial.json'));
 
 /* 2. O que entra no zip -------------------------------------------------- */
 function listar(pasta, prefixo, filtro) {

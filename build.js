@@ -22,6 +22,10 @@ const path = require('path');
 const ROOT = __dirname;
 const SRC = path.join(ROOT, 'src');
 const CANCERS = require('./src/data/cancers');
+// Artigos iniciais. Na hospedagem quem manda é o painel: estes são o ponto de
+// partida e o que aparece no GitHub Pages. Ver src/artigos.js.
+const ARTIGOS = require('./src/data/artigos.json');
+const Artigos = require('./src/artigos');
 // Dados de contato e redes. Na hospedagem quem manda é o painel; este
 // arquivo é o ponto de partida e o que aparece no GitHub Pages.
 const SITE = require('./src/data/site.json');
@@ -100,15 +104,14 @@ const PAGES = [
       'prevenção diagnóstico precoce sinais de alerta nódulo caroço perda de peso sangramento tosse exames de rotina hábitos de vida rastreamento',
   },
   {
-    slug: 'direitos',
-    nav: 'direitos',
-    title: 'Leis e direitos do paciente oncológico | Dr. Bruno Kersten',
+    slug: 'artigos',
+    nav: 'artigos',
+    title: 'Artigos sobre câncer | Dr. Bruno Kersten',
     description:
-      'Prazos de tratamento, benefícios do INSS, saque do FGTS e isenções de impostos: os direitos previstos em lei para quem tem diagnóstico de câncer.',
-    searchTitle: 'Leis e direitos do paciente oncológico',
-    section: 'Leis e direitos',
-    keywords:
-      'direitos leis paciente oncologico beneficios inss fgts pis pasep isencao imposto de renda ipi ipva bpc loas auxilio doenca aposentadoria tfd reconstrucao mamaria defensoria servico social 60 dias',
+      'Textos sobre câncer, tratamento e prevenção, escritos para pacientes e familiares.',
+    searchTitle: 'Artigos',
+    section: 'Artigos',
+    keywords: 'artigos textos leitura cancer tratamento prevencao informacao pacientes familiares',
   },
   {
     slug: 'contato',
@@ -332,7 +335,7 @@ ${
           <ul class="side-nav">
             <li><a href="prevencao.html#sinais">Sinais de alerta</a></li>
             <li><a href="prevencao.html#exames">Exames de rotina e rastreamento</a></li>
-            <li><a href="direitos.html">Leis e direitos do paciente</a></li>
+            <li><a href="artigos.html">Artigos sobre câncer</a></li>
             <li><a href="jornada.html">A jornada do cuidado</a></li>
           </ul>
         </div>
@@ -404,7 +407,7 @@ ${blocos}
           <ul class="side-nav">
             <li><a href="prevencao.html#sinais">Sinais de alerta</a></li>
             <li><a href="prevencao.html#exames">Exames de rotina e rastreamento</a></li>
-            <li><a href="direitos.html">Leis e direitos do paciente</a></li>
+            <li><a href="artigos.html">Artigos sobre câncer</a></li>
             <li><a href="jornada.html">A jornada do cuidado</a></li>
           </ul>
         </div>
@@ -444,6 +447,13 @@ for (const c of CANCERS) {
   });
 }
 
+/* Uma página por artigo publicado, sempre no fim do mapa: o painel PHP monta
+   o índice da busca como "páginas fixas + artigos", nessa ordem. O conteúdo
+   sai de src/pages/_artigo.html, montado em build(). */
+for (const artigo of Artigos.publicados(ARTIGOS)) {
+  PAGES.push({ slug: `artigo-${artigo.slug}`, artigo });
+}
+
 /* ------------------------------------------------------------------------ */
 
 const read = (p) => fs.readFileSync(p, 'utf8');
@@ -475,8 +485,14 @@ function markActiveNav(html, nav) {
   );
 }
 
-function buildSearchIndex() {
-  const entries = PAGES.filter((p) => p.indexable !== false).map((p) => ({
+/**
+ * Índice da busca. JSON compacto de propósito: o painel PHP regrava este
+ * arquivo com os artigos salvos nele, e o json_encode do PHP só sai idêntico
+ * ao JSON.stringify sem indentação. Com `modelos`, grava também a parte fixa
+ * (sem os artigos), que é de onde o painel parte.
+ */
+function buildSearchIndex(modelos) {
+  const fixas = PAGES.filter((p) => !p.artigo && p.indexable !== false).map((p) => ({
     title: p.searchTitle || p.title,
     url: `${p.slug}.html`,
     section: p.section,
@@ -484,11 +500,12 @@ function buildSearchIndex() {
     keywords: p.keywords || '',
     sintomas: p.sintomas || '',
   }));
+  const entries = [...fixas, ...PAGES.filter((p) => p.artigo).map((p) => Artigos.entradaDeBusca(p.artigo))];
 
-  const file = `/* Gerado automaticamente por build.js — não editar à mão. */
-window.SEARCH_INDEX = ${JSON.stringify(entries, null, 2)};
-`;
+  const file = '/* Gerado automaticamente por build.js — não editar à mão. */\n' +
+    `window.SEARCH_INDEX = ${JSON.stringify(entries)};\n`;
   fs.writeFileSync(path.join(ROOT, 'assets', 'js', 'search-index.js'), file);
+  if (modelos) fs.writeFileSync(path.join(modelos, 'busca-base.json'), JSON.stringify(fixas) + '\n');
   return entries.length;
 }
 
@@ -511,16 +528,20 @@ function build({ modelos } = {}) {
   if (modelos) fs.mkdirSync(modelos, { recursive: true });
 
   // O índice da busca sai primeiro: a assinatura dele vai no endereço que as
-  // páginas usam.
-  const indexed = buildSearchIndex();
+  // páginas usam. Ela é um token do site, e não do layout, porque o painel
+  // regrava o índice quando um artigo muda — e precisa trocar a assinatura.
+  const indexed = buildSearchIndex(modelos);
+  TOKENS_SITE.V_BUSCA = assinatura('assets/js/search-index.js');
   const versoes = {
     V_CSS: assinatura('assets/css/styles.css'),
     V_JS: assinatura('assets/js/main.js'),
-    V_BUSCA: assinatura('assets/js/search-index.js'),
+    V_BUSCA: '{{V_BUSCA}}', // fica no modelo; sai em aplicarTokensSite
   };
+  const listaDeArtigos = Artigos.listaDeArtigos(ARTIGOS);
 
   let built = 0;
   for (const page of PAGES) {
+    if (page.artigo) continue; // montadas abaixo, a partir de _artigo.html
     // Páginas com `content` são montadas em memória (tipos de câncer); as demais
     // vêm de um arquivo em src/pages/.
     let corpo;
@@ -554,8 +575,32 @@ function build({ modelos } = {}) {
       ...versoes,
     });
 
-    fs.writeFileSync(path.join(ROOT, `${page.slug}.html`), aplicarTokensSite(modelo));
+    // Primeiro o conteúdo gerado (a lista de artigos), depois os dados de
+    // contato — a mesma ordem que o painel PHP segue.
+    const pagina = aplicarTokensSite(Artigos.aplicarTokens(modelo, { ARTIGOS_LISTA: listaDeArtigos }));
+    fs.writeFileSync(path.join(ROOT, `${page.slug}.html`), pagina);
     if (modelos) fs.writeFileSync(path.join(modelos, `${page.slug}.html`), modelo);
+    built += 1;
+  }
+
+  // Modelo da página de artigo: um só, com {{ARTIGO_TITULO}} e afins. O painel
+  // usa este mesmo arquivo para publicar os artigos salvos nele.
+  const modeloArtigo = applyTemplate(layout, {
+    TITLE: '{{ARTIGO_TITULO}} | Dr. Bruno Kersten',
+    DESCRIPTION: '{{ARTIGO_RESUMO}}',
+    HEAD_EXTRA: '',
+    BODY_CLASS: 'page-artigo',
+    HEADER: markActiveNav(header, 'artigos'),
+    CONTENT: read(path.join(SRC, 'pages', '_artigo.html')).trimEnd(),
+    FOOTER: footer,
+    YEAR: String(new Date().getFullYear()),
+    NOINDEX: '',
+    ...versoes,
+  });
+  if (modelos) fs.writeFileSync(path.join(modelos, '_artigo.html'), modeloArtigo);
+  for (const page of PAGES.filter((p) => p.artigo)) {
+    const pagina = aplicarTokensSite(Artigos.aplicarTokens(modeloArtigo, Artigos.tokensDoArtigo(page.artigo)));
+    fs.writeFileSync(path.join(ROOT, `${page.slug}.html`), pagina);
     built += 1;
   }
 

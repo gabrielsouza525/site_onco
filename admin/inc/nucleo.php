@@ -772,9 +772,11 @@ function processarFoto(array $foto, array $envio): string
     $largura = imagesx($origem);
     $altura = imagesy($origem);
 
-    // Corta no formato da página (3×4). Sobrando altura, o corte puxa para
-    // cima: em retrato, o rosto costuma estar no terço de cima.
+    // Corta no formato da página. Sobrando altura, o corte puxa para cima nas
+    // fotos de retrato (o rosto costuma estar no terço de cima); nas capas de
+    // artigo, fica no meio. É o "viés".
     $proporcao = $foto['largura'] / $foto['altura'];
+    $vies = (float) ($foto['vies'] ?? 0.25);
     if ($largura / $altura > $proporcao) {
         $corteA = $altura;
         $corteL = (int) round($altura * $proporcao);
@@ -784,7 +786,7 @@ function processarFoto(array $foto, array $envio): string
         $corteL = $largura;
         $corteA = (int) round($largura / $proporcao);
         $x = 0;
-        $y = (int) (($altura - $corteA) * 0.25);
+        $y = (int) (($altura - $corteA) * $vies);
     }
     if ($corteL < 400) {
         imagedestroy($origem);
@@ -819,20 +821,34 @@ function processarFoto(array $foto, array $envio): string
  * Deixa public_html/fotos com exatamente as fotos em uso: copia as que
  * faltam e apaga as que foram substituídas. Só mexe em arquivos com o nome
  * que o painel dá; o resto da pasta fica como está.
+ *
+ * A capa de um rascunho fica guardada na pasta de dados, mas só vai para o
+ * site quando o artigo é publicado.
  */
-function sincronizarFotos(array $dados): void
+function sincronizarFotos(array $dados, array $artigos): void
 {
     $publica = RAIZ_SITE . '/' . PASTA_FOTOS_PUBLICA;
-    $emUso = [];
+    $guardadas = [];
+    $publicas = [];
     foreach (fotos() as $foto) {
         if (fotoTrocada($foto, $dados)) {
-            $emUso[] = basename((string) $dados[$foto['chave']]);
+            $guardadas[] = $publicas[] = basename((string) $dados[$foto['chave']]);
         }
     }
-    if ($emUso && !is_dir($publica)) {
+    foreach ($artigos as $artigo) {
+        $capa = caminhoDaCapa($artigo);
+        if (strpos($capa, PASTA_FOTOS_PUBLICA . '/') === 0) {
+            $guardadas[] = basename($capa);
+            if (!empty($artigo['publicado'])) {
+                $publicas[] = basename($capa);
+            }
+        }
+    }
+
+    if ($publicas && !is_dir($publica)) {
         @mkdir($publica, 0755, true);
     }
-    foreach ($emUso as $nome) {
+    foreach ($publicas as $nome) {
         $origem = pastaDeFotosGuardadas() . '/' . $nome;
         $destino = $publica . '/' . $nome;
         if (!is_file($destino) || filesize($destino) !== filesize($origem)) {
@@ -840,8 +856,9 @@ function sincronizarFotos(array $dados): void
         }
     }
 
-    $padrao = '/^(' . implode('|', array_column(fotos(), 'nome')) . ')-[a-f0-9]{8}\.jpg$/';
-    foreach ([$publica, pastaDeFotosGuardadas()] as $pasta) {
+    $nomes = array_merge(array_column(fotos(), 'nome'), [configDaCapa()['nome']]);
+    $padrao = '/^(' . implode('|', $nomes) . ')-[a-f0-9]{8}\.jpg$/';
+    foreach ([$publica => $publicas, pastaDeFotosGuardadas() => $guardadas] as $pasta => $emUso) {
         foreach (glob($pasta . '/*.jpg') ?: [] as $arquivo) {
             $nome = basename($arquivo);
             if (preg_match($padrao, $nome) && !in_array($nome, $emUso, true)) {
@@ -902,6 +919,26 @@ function versaoDosModelos(): string
     return (string) (lerJson(MODELOS_DIR . '/versao.json')['versao'] ?? '');
 }
 
+/**
+ * Regrava o índice da busca com os artigos atuais: a parte fixa vem do pacote
+ * (busca-base.json), os artigos entram no fim. Sai idêntico ao do build.js —
+ * por isso o JSON é compacto, sem escapar acentos nem barras.
+ *
+ * @return string assinatura do arquivo, para o endereço ?v= das páginas
+ */
+function gravarIndiceDeBusca(array $artigos): string
+{
+    $entradas = array_merge(
+        lerJson(MODELOS_DIR . '/busca-base.json') ?? [],
+        array_map('entradaDeBusca', artigosPublicados($artigos))
+    );
+    $json = json_encode($entradas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_LINE_TERMINATORS);
+    $conteudo = "/* Gerado automaticamente por build.js — não editar à mão. */\n" .
+        'window.SEARCH_INDEX = ' . $json . ";\n";
+    gravarAtomico(RAIZ_SITE . '/assets/js/search-index.js', $conteudo, 0644);
+    return substr(md5($conteudo), 0, 8);
+}
+
 /** @return string[] nomes dos modelos, só os que têm cara de página do site */
 function modelosDisponiveis(): array
 {
@@ -936,25 +973,46 @@ function publicar(): array
     }
     try {
         $dados = carregarDados();
+        $artigos = carregarArtigos();
         // As fotos primeiro: quando a página nova sair, a foto já está lá.
-        sincronizarFotos($dados);
+        sincronizarFotos($dados, $artigos);
         $tokens = tokensDoSite($dados);
+        $tokens['{{V_BUSCA}}'] = gravarIndiceDeBusca($artigos);
+
+        // Mesma ordem do build.js: primeiro o conteúdo gerado (a lista de
+        // artigos), depois os dados de contato.
+        $conteudo = ['{{ARTIGOS_LISTA}}' => listaDeArtigos($artigos)];
         foreach ($modelos as $nome) {
-            $html = strtr((string) file_get_contents(MODELOS_DIR . '/' . $nome), $tokens);
+            $html = strtr(strtr((string) file_get_contents(MODELOS_DIR . '/' . $nome), $conteudo), $tokens);
             gravarAtomico(RAIZ_SITE . '/' . $nome, $html, 0644);
+        }
+
+        // Uma página por artigo publicado, a partir do modelo único.
+        $publicadas = $modelos;
+        $modeloArtigo = MODELOS_DIR . '/_artigo.html';
+        if (is_file($modeloArtigo)) {
+            $base = (string) file_get_contents($modeloArtigo);
+            foreach (artigosPublicados($artigos) as $artigo) {
+                $nome = 'artigo-' . $artigo['slug'] . '.html';
+                if (!preg_match('/^artigo-[a-z0-9-]+\.html$/', $nome)) {
+                    continue;
+                }
+                gravarAtomico(RAIZ_SITE . '/' . $nome, strtr(strtr($base, tokensDoArtigo($artigo)), $tokens), 0644);
+                $publicadas[] = $nome;
+            }
         }
 
         $anterior = ultimaPublicacao() ?? [];
         foreach ((array) ($anterior['arquivos'] ?? []) as $velho) {
             $velho = basename((string) $velho);
-            if (!in_array($velho, $modelos, true)
+            if (!in_array($velho, $publicadas, true)
                 && preg_match('/^[a-z0-9-]+\.html$/', $velho)
                 && is_file(RAIZ_SITE . '/' . $velho)) {
                 @unlink(RAIZ_SITE . '/' . $velho);
             }
         }
 
-        $registro = ['versao' => versaoDosModelos(), 'arquivos' => $modelos, 'em' => time()];
+        $registro = ['versao' => versaoDosModelos(), 'arquivos' => $publicadas, 'em' => time()];
         gravarAtomico(arquivoDePublicacao(), json_encode($registro, JSON_PRETTY_PRINT) . "\n");
         return $registro;
     } finally {
@@ -981,21 +1039,24 @@ function publicarSePreciso(): void
     }
 }
 
-/** Contagens para as telas: páginas do site e quantas são de tipos de câncer. */
+/** Contagens para as telas: páginas do site, tipos de câncer e artigos. */
 function contagens(): array
 {
     $modelos = modelosDisponiveis();
     $canceres = count(array_filter($modelos, static function ($n) {
         return strpos($n, 'cancer-') === 0;
     }));
+    $artigos = count(artigosPublicados(carregarArtigos()));
     // busca e 404 não são conteúdo; não entram na conta de páginas publicadas.
-    $paginas = count(array_diff($modelos, ['404.html', 'busca.html']));
-    return ['paginas' => $paginas, 'canceres' => $canceres];
+    $paginas = count(array_diff($modelos, ['404.html', 'busca.html'])) + $artigos;
+    return ['paginas' => $paginas, 'canceres' => $canceres, 'artigos' => $artigos];
 }
 
 /* ---------------------------------------------------------------------------
  * Toda tela do painel começa por aqui.
  * ------------------------------------------------------------------------ */
+
+require __DIR__ . '/artigos.php';
 
 cabecalhosDeSeguranca();
 try {
