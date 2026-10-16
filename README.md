@@ -210,6 +210,36 @@ php -S localhost:8090 -t teste/public_html
 E abra <http://localhost:8090/admin/>. A pasta de dados será criada em
 `teste/painel-dados`.
 
+### Artigos
+
+A página **Artigos** lista os textos publicados, e cada um ganha a própria
+página (`artigo-<endereço>.html`). No painel há a lista com os artigos
+publicados e os rascunhos, e um editor com título, resumo, data, texto, capa
+opcional (16:9) e a opção "Publicar no site". O editor mostra ao lado uma
+prévia de como o texto vai ficar.
+
+O texto usa um formato simples, explicado no próprio editor:
+
+| Escrevendo | Vira |
+|---|---|
+| linha em branco | novo parágrafo |
+| `## Título` / `### Título` | subtítulo / subtítulo menor |
+| `- item` | item de lista |
+| `> texto` | quadro de destaque |
+| `**palavra**` | negrito |
+
+As regras estão em dois lugares que precisam gerar o mesmo HTML:
+`src/artigos.js` (build) e `admin/inc/artigos.php` (painel). Os artigos
+iniciais ficam em `src/data/artigos.json`; depois que o painel salva a
+primeira lista, valem só os dele, guardados em `painel-dados/artigos.json`.
+
+**Importar de PDF:** no editor, "Escolher PDF" lê o arquivo no próprio
+navegador, com o [PDF.js](https://mozilla.github.io/pdf.js/) da Mozilla, e
+preenche texto, título e resumo para revisão. O PDF não é enviado ao servidor.
+O PDF.js vem do cdnjs, com versão fixa e conferido por assinatura (SRI); para
+trocar de versão, atualize a URL e as duas assinaturas em `admin/painel.js`.
+PDF digitalizado (só imagem) não tem texto para importar.
+
 ### O que não se edita pelo painel
 
 O texto das páginas (`src/pages/*.html`) e os tipos de câncer

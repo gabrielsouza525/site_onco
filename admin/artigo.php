@@ -154,6 +154,25 @@ abrirPagina($titulo . ' — Área administrativa', 'page-painel');
       <input type="hidden" name="id" value="<?= e($artigo['id']) ?>">
 
       <div class="cartao artigo-campos">
+        <!-- Importar de PDF: o texto é extraído no navegador (painel.js) e vai
+             para o campo Texto, para revisar antes de salvar. O campo de
+             arquivo não tem name, então o PDF nunca é enviado ao servidor.
+             Sem JavaScript não há como ler o PDF; por isso começa escondido. -->
+        <div class="artigo-importar" data-importar hidden>
+          <span class="cartao-ico"><?= icone('pdf') ?></span>
+          <div>
+            <p class="artigo-importar-titulo">Importar de um PDF</p>
+            <p class="painel-dica" id="importarPdf-dica">
+              O texto do PDF vem para os campos abaixo, para você revisar antes de salvar.
+              O arquivo não vai para o site. Imagens e tabelas ficam de fora.
+            </p>
+            <input class="painel-arquivo" id="importarPdf" type="file" accept="application/pdf,.pdf"
+                   aria-describedby="importarPdf-dica importarPdf-situacao">
+            <label class="botao-arquivo" for="importarPdf"><?= icone('enviar') ?><span>Escolher PDF</span></label>
+            <p class="painel-dica painel-foto-situacao" id="importarPdf-situacao" aria-live="polite"></p>
+          </div>
+        </div>
+
         <div class="painel-campo"<?= isset($erros['titulo']) ? ' data-erro' : '' ?>>
           <label for="titulo">Título</label>
           <input id="titulo" name="titulo" type="text" value="<?= e($artigo['titulo']) ?>" maxlength="140"

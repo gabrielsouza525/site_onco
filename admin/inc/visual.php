@@ -83,6 +83,7 @@ function icone(string $nome): string
         'linkedin' => '<path d="M4.5 9v11M4.5 4.5v.01M10 20V9m0 4.5c0-2 1.4-3.5 3.4-3.5S17 11.5 17 13.8V20"/>',
         'whatsapp' => '<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/>',
         'artigo' => '<path d="M4 19.5V6a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M9 8h7M9 12h5"/>',
+        'pdf' => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
         'voltar' => '<path d="M19 12H5M12 19l-7-7 7-7"/>',
         'olho' => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
     ];
