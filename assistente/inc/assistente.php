@@ -141,7 +141,7 @@ function configDoAssistente(): array
 /** Tem uma chave de verdade (e não o texto de exemplo do README)? */
 function assistenteConfigurado(array $c): bool
 {
-    return strlen($c['chave']) >= 20 && stripos($c['chave'], 'cole') === false;
+    return strlen($c['chave']) >= 20 && strtoupper($c['chave']) !== 'COLE_AQUI_A_SUA_CHAVE';
 }
 
 /**
