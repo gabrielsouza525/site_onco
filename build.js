@@ -26,6 +26,8 @@ const CANCERS = require('./src/data/cancers');
 // partida e o que aparece no GitHub Pages. Ver src/artigos.js.
 const ARTIGOS = require('./src/data/artigos.json');
 const Artigos = require('./src/artigos');
+// Base de conhecimento do assistente virtual, tirada do texto das páginas.
+const { gerarConhecimento } = require('./src/conhecimento');
 // Dados de contato e redes. Na hospedagem quem manda é o painel; este
 // arquivo é o ponto de partida e o que aparece no GitHub Pages.
 const SITE = require('./src/data/site.json');
@@ -535,8 +537,21 @@ function build({ modelos } = {}) {
   const versoes = {
     V_CSS: assinatura('assets/css/styles.css'),
     V_JS: assinatura('assets/js/main.js'),
+    V_ASSISTENTE: assinatura('assets/js/assistente.js'),
     V_BUSCA: '{{V_BUSCA}}', // fica no modelo; sai em aplicarTokensSite
   };
+
+  // A base do assistente sai do mesmo texto que vira as páginas: mudou uma
+  // página em src/, a base acompanha. Os artigos e os dados de contato ficam
+  // de fora — mudam pelo painel, e o PHP do assistente os acrescenta na hora.
+  fs.writeFileSync(
+    path.join(ROOT, 'assistente', 'inc', 'conhecimento.md'),
+    gerarConhecimento({
+      paginas: PAGES,
+      cancers: CANCERS,
+      lerPagina: (slug) => read(path.join(SRC, 'pages', `${slug}.html`)),
+    })
+  );
   const listaDeArtigos = Artigos.listaDeArtigos(ARTIGOS);
 
   let built = 0;

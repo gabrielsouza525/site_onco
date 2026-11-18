@@ -1641,10 +1641,11 @@ a.news-thumb { color: inherit; }
 .footer-restrito:focus-visible { color: #fff; text-decoration: underline; }
 
 /* Voltar ao topo --------------------------------------------------------- */
+/* Fica acima do botão do assistente virtual, que ocupa o canto (seção 20). */
 .to-top {
   position: fixed;
-  right: 22px;
-  bottom: 22px;
+  right: 27px;
+  bottom: 92px;
   z-index: 60;
   display: grid;
   place-items: center;
@@ -1827,7 +1828,7 @@ a.news-thumb { color: inherit; }
 
 @media print {
   .site-header, .to-top, .carousel-controls, .carousel-dots,
-  .newsletter, .cta-band { display: none !important; }
+  .newsletter, .cta-band, .assistente-botao, .assistente { display: none !important; }
   body { color: #000; }
   .section { padding: 20px 0; }
   a { color: #000; text-decoration: underline; }
@@ -2080,3 +2081,313 @@ a.news-thumb { color: inherit; }
   .auth-stats { gap: 24px; }
   .auth-card { padding: 24px 18px; border-radius: 18px; }
 }
+
+/* --------------------------------------------------------------------------
+   20. Assistente virtual
+   Botão no canto e janela de conversa, montados por assets/js/assistente.js.
+   No computador a janela flutua no canto; até 600px ocupa a tela inteira.
+   -------------------------------------------------------------------------- */
+.assistente-botao {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 22px 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--blue-800);
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg), var(--shadow-md);
+  transition: background-color .2s ease, transform .2s ease;
+}
+.assistente-botao:hover { background: var(--blue-900); transform: translateY(-2px); }
+.assistente-botao svg { width: 24px; height: 24px; flex-shrink: 0; }
+.assistente-aberto .assistente-botao,
+.assistente-aberto .to-top { display: none; }
+
+.assistente {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  height: min(640px, calc(100vh - 44px));
+  height: min(640px, calc(100dvh - 44px));
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-md);
+  overflow: hidden;
+  animation: assistente-entrada .22s ease-out;
+}
+.assistente[hidden] { display: none; }
+
+@keyframes assistente-entrada {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Topo ------------------------------------------------------------------- */
+.assistente-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 14px 16px;
+  background: var(--blue-900);
+  color: #fff;
+}
+.assistente-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .12);
+  color: #ffb570;
+}
+.assistente-avatar svg { width: 21px; height: 21px; }
+.assistente-identidade { flex: 1; min-width: 0; }
+.assistente-identidade h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.assistente-identidade p {
+  margin: 1px 0 0;
+  color: #c9dbf2;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.assistente-acao {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  transition: background-color .2s ease;
+}
+.assistente-acao:hover { background: rgba(255, 255, 255, .14); }
+.assistente-acao svg { width: 19px; height: 19px; }
+
+/* Conversa --------------------------------------------------------------- */
+.assistente-conversa {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+}
+.assistente-conversa:focus-visible { outline-offset: -3px; }
+
+.assistente-msg {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.assistente-msg p { margin: 0; }
+.assistente-msg p + p,
+.assistente-msg p + ul,
+.assistente-msg ul + p { margin-top: 8px; }
+.assistente-msg ul { margin: 0; padding-left: 18px; }
+.assistente-msg li + li { margin-top: 3px; }
+
+.assistente-msg--assistente {
+  align-self: flex-start;
+  background: var(--bg-soft);
+  color: var(--ink);
+  border-bottom-left-radius: 4px;
+}
+.assistente-msg--assistente a,
+.assistente-msg--erro a {
+  color: var(--blue-700);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.assistente-msg--assistente a:hover,
+.assistente-msg--erro a:hover { color: var(--blue-900); }
+
+.assistente-msg--usuario {
+  align-self: flex-end;
+  background: var(--blue-700);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+  white-space: pre-wrap;
+}
+.assistente-msg--nao-enviada { opacity: .6; }
+
+.assistente-msg--erro {
+  align-self: flex-start;
+  background: var(--orange-50);
+  color: var(--ink);
+  border-left: 3px solid var(--orange);
+  border-radius: 6px;
+}
+
+.assistente-boas-vindas { max-width: 100%; }
+.assistente-privacidade {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* Sugestões -------------------------------------------------------------- */
+.assistente-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.assistente-sugestoes[hidden] { display: none; }
+.assistente-sugestao {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 13px;
+  border: 1px solid var(--blue-300);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--blue-800);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+.assistente-sugestao:hover { background: var(--blue-50); border-color: var(--blue-600); color: var(--blue-900); }
+.assistente-sugestao:disabled { opacity: .55; cursor: default; }
+.assistente-sugestao--contato { border-color: var(--orange); color: #a8500b; }
+.assistente-sugestao--contato:hover { background: var(--orange-50); border-color: var(--orange-dark); color: #8a4108; }
+
+/* Digitando… ------------------------------------------------------------- */
+.assistente-digitando {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.assistente-pontos { display: inline-flex; gap: 4px; }
+.assistente-pontos i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue-600);
+  animation: assistente-pontos 1.1s infinite ease-in-out;
+}
+.assistente-pontos i:nth-child(2) { animation-delay: .15s; }
+.assistente-pontos i:nth-child(3) { animation-delay: .3s; }
+@keyframes assistente-pontos {
+  0%, 80%, 100% { opacity: .3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Campo de pergunta ------------------------------------------------------ */
+.assistente-form {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 12px 18px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+.assistente-form textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 132px;
+  padding: 11px 14px;
+  border: 1px solid #7a8798;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.4;
+  resize: none;
+}
+.assistente-form textarea::placeholder { color: var(--muted); opacity: 1; }
+.assistente-form textarea:focus { border-color: var(--blue-600); }
+.assistente-enviar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue-800);
+  color: #fff;
+  transition: background-color .2s ease;
+}
+.assistente-enviar:hover { background: var(--blue-900); }
+.assistente-enviar:disabled { background: #6a7583; cursor: default; }
+.assistente-enviar svg { width: 20px; height: 20px; }
+.assistente-contador {
+  position: absolute;
+  right: 66px;
+  bottom: 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.assistente-contador.is-perto { color: #a8500b; font-weight: 600; }
+.assistente-rodape {
+  margin: 0;
+  padding: 0 14px 12px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Celular: tela inteira -------------------------------------------------- */
+@media (max-width: 600px) {
+  .assistente-botao {
+    right: 16px;
+    bottom: 16px;
+    width: 56px;
+    padding: 0;
+    justify-content: center;
+  }
+  .assistente-botao-texto { display: none; }
+  .to-top { right: 21px; bottom: 84px; }
+
+  .assistente {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+  .assistente-msg { max-width: 92%; }
+  /* 16px evita o zoom automático do iPhone ao tocar no campo. */
+  .assistente-form textarea { font-size: 16px; }
+  .assistente-rodape { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+html.assistente-tela-cheia,
+html.assistente-tela-cheia body { overflow: hidden; }
