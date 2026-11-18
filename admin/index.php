@@ -174,6 +174,20 @@ $n = contagens();
 $usuarios = carregarUsuarios();
 $artigos = carregarArtigos();
 
+// Assistente virtual: só a situação. A chave da API nunca aparece no painel.
+$assistente = null;
+$erroDoAssistente = '';
+if (is_file(RAIZ_SITE . '/assistente/inc/assistente.php')) {
+    try {
+        require_once RAIZ_SITE . '/assistente/inc/assistente.php';
+        $assistente = situacaoDoAssistente();
+    } catch (Throwable $erro) {
+        // Por exemplo, um assistente.php com erro de digitação.
+        $erroDoAssistente = 'Não foi possível ler a configuração do assistente (assistente.php, ' .
+            ondeFicaADados() . '). Confira se o arquivo segue o modelo do README.';
+    }
+}
+
 $hora = (int) date('G');
 $saudacao = $hora >= 5 && $hora < 12 ? 'Bom dia' : ($hora >= 12 && $hora < 18 ? 'Boa tarde' : 'Boa noite');
 
@@ -492,6 +506,52 @@ endforeach; ?>
         <button type="submit" class="painel-acao painel-acao--leve"><?= icone('atualizar') ?>Publicar de novo</button>
       </form>
     </section>
+
+<?php if ($assistente !== null || $erroDoAssistente !== ''): ?>
+    <!-- Assistente virtual ---------------------------------------------- -->
+    <section class="cartao" id="assistente" aria-labelledby="tituloAssistente">
+      <header class="cartao-topo">
+        <span class="cartao-ico"><?= icone('conversa') ?></span>
+        <div>
+          <h2 id="tituloAssistente">Assistente virtual</h2>
+          <p class="painel-legenda">É o botão “Tire suas dúvidas” do site. Responde com o texto das páginas e dos artigos publicados, e as conversas não ficam gravadas.</p>
+        </div>
+      </header>
+
+<?php if ($erroDoAssistente !== ''): ?>
+      <p class="painel-aviso" data-tipo="erro" role="alert"><?= e($erroDoAssistente) ?></p>
+<?php else: ?>
+      <dl class="publicacao-numeros">
+        <div>
+          <dt>Situação</dt>
+          <dd><?= $assistente['configurado'] ? 'Ligado' : 'Sem chave' ?></dd>
+        </div>
+        <div>
+          <dt>Modelo</dt>
+          <dd><small><?= e($assistente['modelo']) ?></small></dd>
+        </div>
+        <div>
+          <dt>Mensagens hoje</dt>
+          <dd><?= (int) $assistente['hoje'] ?><?php if ($assistente['limite_diario'] > 0): ?> <small>de <?= (int) $assistente['limite_diario'] ?></small><?php endif; ?></dd>
+        </div>
+      </dl>
+<?php if (!$assistente['configurado']): ?>
+      <p class="painel-nota">
+        Para ligar, crie o arquivo <strong>assistente.php</strong> <?= e(ondeFicaADados()) ?>, com a chave da
+        API do Google AI Studio. O passo a passo está no README do projeto. Até lá, o botão aparece no site e
+        avisa que o assistente está indisponível, indicando a página de contato.
+      </p>
+<?php else: ?>
+      <p class="painel-nota">
+        Cada visitante pode mandar até <?= (int) $assistente['limite_por_ip'] ?> mensagens a cada
+        <?= (int) $assistente['janela_minutos'] ?> minutos<?= $assistente['limite_diario'] > 0
+            ? ', e o site inteiro até ' . (int) $assistente['limite_diario'] . ' por dia' : '' ?>.
+        Para trocar a chave ou o modelo, edite o arquivo assistente.php <?= e(ondeFicaADados()) ?>.
+      </p>
+<?php endif; ?>
+<?php endif; ?>
+    </section>
+<?php endif; ?>
 
     <!-- Acessos --------------------------------------------------------- -->
     <section class="cartao" id="acessos" aria-labelledby="tituloAcessos">

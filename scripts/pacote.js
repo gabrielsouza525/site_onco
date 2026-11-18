@@ -8,6 +8,7 @@
  *   admin/           o painel em PHP
  *   admin/modelos/   cada página SEM os dados de contato ({{TELEFONE}} etc.),
  *                    mais versao.json e site-inicial.json
+ *   assistente/      o assistente virtual (PHP), com regras e base de conhecimento
  *
  * Com as páginas prontas, o site funciona assim que o zip é extraído — mesmo
  * numa public_html vazia. Os dados salvos pelo painel não se perdem: ficam na
@@ -91,6 +92,10 @@ const arquivos = [
   ...listar(path.join(ROOT, 'assets'), 'assets/'),
   ...listar(path.join(ROOT, 'admin'), 'admin/', doAdmin),
   ...listar(modelos, 'admin/modelos/'),
+  // O assistente virtual: o endereço público e, em inc/, regras, base de
+  // conhecimento e código (protegidos por .htaccess). A chave da API não vem
+  // daqui: fica em painel-dados/assistente.php, criado na hospedagem.
+  ...listar(path.join(ROOT, 'assistente'), 'assistente/'),
 ];
 
 /* 3. Zip ------------------------------------------------------------------ */

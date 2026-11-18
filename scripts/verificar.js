@@ -34,7 +34,8 @@ console.log('\nVerificando o site\n');
 
 // Só interessam os arquivos que o build produz. Uma alteração em package.json
 // ou em src/ é trabalho legítimo, não divergência.
-const ehGerado = (f) => /^[^/]+\.html$/.test(f) || f === 'assets/js/search-index.js';
+const ehGerado = (f) => /^[^/]+\.html$/.test(f) || f === 'assets/js/search-index.js'
+  || f === 'assistente/inc/conhecimento.md';
 
 /** Arquivos gerados com diferença real de conteúdo em relação ao commit. */
 const geradosAlterados = () =>
@@ -134,6 +135,21 @@ if (quebrados.length === 0) {
 } else {
   falha(`${quebrados.length} link(s) quebrado(s)`);
   quebrados.slice(0, 12).forEach((q) => console.log(`    ${q}`));
+}
+
+/* 2b. Endereços que o assistente virtual pode indicar ------------------- */
+// O assistente só indica endereços que aparecem na base de conhecimento; um
+// endereço quebrado ali vira um link quebrado na conversa.
+const base = fs.readFileSync(path.join(ROOT, 'assistente', 'inc', 'conhecimento.md'), 'utf8');
+const citados = new Set([...base.matchAll(/\b([a-z0-9-]+\.html(?:#[a-z0-9-]+)?)/g)].map((m) => m[1]));
+const quebradosNaBase = [...citados].filter((alvo) => {
+  const [arquivo, frag] = alvo.split('#');
+  return !ancoras[arquivo] || (frag && !ancoras[arquivo].has(frag));
+});
+if (quebradosNaBase.length === 0) {
+  ok(`${citados.size} endereços na base do assistente, todos existem`);
+} else {
+  falha(`endereços quebrados na base do assistente: ${quebradosNaBase.join(', ')}`);
 }
 
 /* 3. Sobrou algum token sem preencher? --------------------------------- */

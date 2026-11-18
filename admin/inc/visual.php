@@ -86,6 +86,7 @@ function icone(string $nome): string
         'pdf' => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
         'voltar' => '<path d="M19 12H5M12 19l-7-7 7-7"/>',
         'olho' => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+        'conversa' => '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>',
     ];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' .
         'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' .
@@ -103,6 +104,7 @@ function barraLateral(string $eu, int $pendentes, string $ativa = ''): void
         'artigos' => ['index.php#artigos', 'artigo', 'Artigos'],
         'fotos' => ['index.php#fotos', 'foto', 'Fotos'],
         'site' => ['index.php#site', 'globo', 'Publicação'],
+        'assistente' => ['index.php#assistente', 'conversa', 'Assistente'],
         'acessos' => ['index.php#acessos', 'pessoas', 'Acessos'],
     ];
     ?>

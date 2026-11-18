@@ -1058,6 +1058,13 @@ function contagens(): array
 
 require __DIR__ . '/artigos.php';
 
+// O assistente virtual do site (assistente/inc/assistente.php) aproveita as
+// funções acima, mas não é uma tela do painel: sem sessão, sem cabeçalhos de
+// página e sem publicar nada. Para ele, este arquivo termina aqui.
+if (defined('NUCLEO_SO_FUNCOES')) {
+    return;
+}
+
 cabecalhosDeSeguranca();
 try {
     pastaDeDados();

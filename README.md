@@ -20,7 +20,7 @@ final fica versionado na raiz do repositório.
 ├── atuacao.html
 ├── jornada.html
 ├── prevencao.html
-├── direitos.html
+├── artigos.html                  ← + uma página por artigo (artigo-*.html)
 ├── tipos-de-cancer.html          ← + uma página por tipo (cancer-*.html)
 ├── contato.html
 ├── busca.html
@@ -29,6 +29,7 @@ final fica versionado na raiz do repositório.
 ├── build.js                      ← gerador (Node, sem dependências)
 ├── scripts/pacote.js             ← monta o zip para a hospedagem
 ├── admin/                        ← painel administrativo (PHP)
+├── assistente/                   ← assistente virtual (PHP + Google Gemini)
 ├── src/
 │   ├── layout.html               ← esqueleto <head>/<body> comum
 │   ├── partials/
@@ -39,6 +40,7 @@ final fica versionado na raiz do repositório.
 └── assets/
     ├── css/styles.css            ← design system completo
     ├── js/main.js                ← menu, carrossel, busca, formulários
+    ├── js/assistente.js          ← janela do assistente virtual
     ├── js/search-index.js        ← gerado pelo build.js
     └── img/                      ← logo e favicon (SVG)
 ```
@@ -245,6 +247,123 @@ PDF digitalizado (só imagem) não tem texto para importar.
 O texto das páginas (`src/pages/*.html`) e os tipos de câncer
 (`src/data/cancers.js`) continuam no código: muda-se no repositório, roda-se
 `npm run pacote` e envia-se o zip.
+
+## Assistente virtual
+
+O botão **“Tire suas dúvidas”**, no canto de todas as páginas públicas, abre
+uma conversa com um assistente de IA (Google Gemini). Ele responde em
+linguagem simples sobre os assuntos do site e indica a página certa. Não faz
+diagnóstico, não interpreta exames, não indica tratamento e não inventa dados
+do consultório: nesses casos, encaminha para `contato.html`. Em emergência,
+orienta ligar para o SAMU (192); em sofrimento emocional intenso, indica o
+CVV (188 ou cvv.org.br).
+
+### Como funciona
+
+```
+navegador (assets/js/assistente.js)
+   │  POST JSON com as últimas 10 mensagens
+   ▼
+assistente/responder.php          ← só POST/JSON, mesma origem, limite de uso
+   │  regras.md + conhecimento.md + dados do consultório + artigos publicados
+   ▼
+API do Google Gemini (generateContent), chamada pelo PHP com cURL
+```
+
+| Arquivo | Papel |
+|---|---|
+| `assets/js/assistente.js` | Botão, janela, histórico em `sessionStorage`, chamada `fetch` |
+| `assistente/responder.php` | Endereço público que recebe as perguntas |
+| `assistente/inc/assistente.php` | Validação, limite de uso, montagem do prompt, chamada à API |
+| `assistente/inc/regras.md` | Prompt de sistema: papel, tom e o que o assistente nunca faz |
+| `assistente/inc/conhecimento.md` | Base de conhecimento, **gerada pelo `build.js`** — não editar à mão |
+| `src/conhecimento.js` | Regras que transformam as páginas em base de conhecimento |
+| `painel-dados/assistente.php` | Chave e modelo (fica **na hospedagem**, fora do repositório e da `public_html`) |
+
+A base de conhecimento sai do próprio texto do site: as páginas de
+`src/pages/` e os 55 tipos de câncer de `src/data/cancers.js`. Mudou uma
+página, o próximo `npm run build` atualiza a base. Os artigos publicados e os
+dados de contato entram na hora, pelo PHP — e só os dados reais: telefone ou
+endereço de exemplo (como `(18) 0000-0000`) não chegam à IA.
+
+### Configurar a chave da API
+
+A chave **nunca** vai para o JavaScript nem fica num arquivo que o navegador
+consiga abrir. Ela fica num arquivo PHP na pasta de dados do painel, fora da
+`public_html`.
+
+1. **Crie a chave.** Entre em [aistudio.google.com](https://aistudio.google.com)
+   com a conta Google do consultório, abra **Get API key** e crie uma chave.
+   Copie o código.
+2. **Veja onde fica a pasta de dados.** No painel (`/admin/`), o cartão
+   **Assistente virtual** diz o caminho exato. Normalmente é
+   `domains/drbrunokersten.com.br/painel-dados/`, ao lado da `public_html`.
+3. **Crie o arquivo.** No DirectAdmin, abra **Gerenciador de Arquivos**, entre
+   nessa pasta, clique em **Novo arquivo**, dê o nome `assistente.php` e cole:
+
+   ```php
+   <?php
+   return [
+       'chave'  => 'COLE_AQUI_A_SUA_CHAVE',
+       'modelo' => 'gemini-3.5-flash-lite',
+   ];
+   ```
+
+   Troque `COLE_AQUI_A_SUA_CHAVE` pela chave e salve. Em **Permissões**, deixe
+   o arquivo em `600`.
+4. **Confira.** No painel, o cartão deve mostrar **Ligado**. No site, faça uma
+   pergunta pelo botão “Tire suas dúvidas”.
+
+Enviar um pacote novo não apaga esse arquivo: ele não está no zip. Sem o
+arquivo, o botão continua no site e responde que o assistente está
+indisponível, indicando a página de contato.
+
+Outras opções que o arquivo aceita (todas têm um valor padrão):
+
+| Opção | Padrão | O que faz |
+|---|---|---|
+| `modelo` | `gemini-3.5-flash-lite` | Código do modelo do Gemini |
+| `raciocinio` | `MINIMAL` | Nível de raciocínio (`MINIMAL`, `LOW`, `MEDIUM`, `HIGH`; `''` usa o do modelo). O `gemini-3.8-flash` e o Gemini 4 não aceitam `MINIMAL`: use `LOW` |
+| `limite_por_ip` / `janela_minutos` | 20 / 10 | Mensagens por visitante a cada tantos minutos |
+| `limite_diario` | 300 | Teto do site inteiro por dia (protege a conta da API); `0` = sem teto |
+| `max_caracteres` | 800 | Tamanho máximo de cada pergunta |
+| `historico` | 10 | Quantas mensagens da conversa vão para a IA |
+| `tempo_limite` | 20 | Segundos esperando a API antes de desistir |
+
+### Privacidade (LGPD)
+
+- O conteúdo das conversas **não é gravado** no servidor. O histórico fica só
+  na aba do navegador de quem conversa (`sessionStorage`) e some ao fechá-la.
+- Para o limite de uso, o servidor guarda apenas o IP embaralhado (hash) e os
+  horários das mensagens dos últimos minutos, em `painel-dados/assistente-uso.php`.
+- A janela avisa que as mensagens vão para o Google Gemini e pede para não
+  escrever dados pessoais. O assistente também não pede esses dados.
+- **Plano gratuito × pago:** no plano gratuito do Gemini, o Google pode usar o
+  conteúdo enviado para melhorar os produtos dele; no plano pago, não. Para uso
+  real com pacientes, o recomendado é ativar o faturamento no AI Studio. Com o
+  `gemini-3.5-flash-lite` (US$ 0,30 por milhão de tokens de entrada e US$ 2,50
+  de saída, em novembro de 2026), cada pergunta sai por menos de US$ 0,01: o
+  prompt tem uns 25 mil tokens. O `limite_diario` segura o gasto.
+
+### Segurança
+
+- Só aceita `POST` com JSON vindo de uma página do próprio site (cabeçalhos
+  `Origin` e `Sec-Fetch-Site`): outro site não consegue usar o endereço como
+  acesso grátis à IA.
+- As respostas do assistente voltam assinadas (HMAC). Como o histórico fica no
+  navegador, sem isso daria para inventar falas do “assistente” e mandá-las de
+  volta — um jeito conhecido de tentar quebrar as regras de um modelo.
+- A resposta da IA nunca entra na página como HTML: vira parágrafos, listas e
+  texto. Só viram link as páginas do próprio site e o site do CVV.
+- A chave vai à API no cabeçalho `x-goog-api-key`, não no endereço, e não
+  aparece em nenhuma tela, nem no painel.
+
+### Testar na própria máquina
+
+O endpoint funciona com o servidor embutido do PHP (ver “Testar na própria
+máquina”, acima). Para testar sem gastar a cota da API, a opção `servidor` do
+`assistente.php` aceita um endereço `http://localhost:porta` — útil para uma
+API simulada. Em produção, não use essa opção.
 
 ## Formulários de contato
 
