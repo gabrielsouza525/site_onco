@@ -1,0 +1,8 @@
+# A cópia do site na Netlify foi desativada: o site oficial é
+# drbrunokersten.com.br. Tudo o que chegar aqui vai para o mesmo endereço no
+# domínio, com redirecionamento permanente (o Google entende que mudou).
+[[redirects]]
+  from = "/*"
+  to = "https://drbrunokersten.com.br/:splat"
+  status = 301
+  force = true

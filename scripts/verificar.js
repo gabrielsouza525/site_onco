@@ -35,7 +35,7 @@ console.log('\nVerificando o site\n');
 // Só interessam os arquivos que o build produz. Uma alteração em package.json
 // ou em src/ é trabalho legítimo, não divergência.
 const ehGerado = (f) => /^[^/]+\.html$/.test(f) || f === 'assets/js/search-index.js'
-  || f === 'assistente/inc/conhecimento.md';
+  || f === 'assistente/inc/conhecimento.md' || f === 'sitemap.xml';
 
 /** Arquivos gerados com diferença real de conteúdo em relação ao commit. */
 const geradosAlterados = () =>
@@ -120,7 +120,8 @@ for (const p of paginas) {
     if (/^(https?:|mailto:|tel:|data:|#$)/.test(alvo)) continue;
     total += 1;
     // "?v=…" é a assinatura de versão do endereço, não parte do nome do arquivo.
-    const [arquivo, frag] = alvo.replace(/\?[^#]*/, '').split('#');
+    // Endereço a partir da raiz ("/assets/…", usado na página 404) vale igual.
+    const [arquivo, frag] = alvo.replace(/\?[^#]*/, '').replace(/^\//, '').split('#');
     const destino = arquivo || p;
     if (!fs.existsSync(path.join(ROOT, destino))) {
       quebrados.push(`${p} -> ${alvo} (arquivo inexistente)`);
@@ -150,6 +151,17 @@ if (quebradosNaBase.length === 0) {
   ok(`${citados.size} endereços na base do assistente, todos existem`);
 } else {
   falha(`endereços quebrados na base do assistente: ${quebradosNaBase.join(', ')}`);
+}
+
+/* 2c. sitemap.xml: só páginas que existem, e nenhuma marcada noindex ------ */
+const mapa = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
+const noMapa = [...mapa.matchAll(/<loc>https:\/\/[^/]+\/([^<]*)<\/loc>/g)].map((m) => m[1] || 'index.html');
+const foraDoLugar = noMapa.filter((p) => !ancoras[p]
+  || /<meta name="robots" content="noindex">/.test(fs.readFileSync(path.join(ROOT, p), 'utf8')));
+if (noMapa.length && foraDoLugar.length === 0) {
+  ok(`${noMapa.length} páginas no sitemap.xml, todas existem e podem ser indexadas`);
+} else {
+  falha(`sitemap.xml com problema: ${foraDoLugar.join(', ') || 'nenhuma página'}`);
 }
 
 /* 3. Sobrou algum token sem preencher? --------------------------------- */

@@ -458,7 +458,35 @@ for (const artigo of Artigos.publicados(ARTIGOS)) {
 
 /* ------------------------------------------------------------------------ */
 
+/* Endereço oficial do site, para o sitemap.xml.
+   ATENÇÃO: admin/inc/nucleo.php (ENDERECO_DO_SITE) repete este valor. */
+const ENDERECO_DO_SITE = 'https://drbrunokersten.com.br';
+
 const read = (p) => fs.readFileSync(p, 'utf8');
+
+/**
+ * Na página 404 os endereços partem da raiz do site ("/assets/...", e não
+ * "assets/..."): a hospedagem a mostra no lugar de qualquer endereço que não
+ * existe, inclusive dentro de pastas (/algo/que/nao/existe), e lá um endereço
+ * relativo apontaria para o lugar errado — a página sairia sem estilo.
+ */
+const enderecosDaRaiz = (html) =>
+  html.replace(/(\s(?:href|src|action))="(?!https?:|mailto:|tel:|data:|#|\/|\{\{)/g, '$1="/');
+
+/**
+ * sitemap.xml: as páginas que o Google deve conhecer, na ordem do índice da
+ * busca. O painel PHP regrava este arquivo quando os artigos mudam
+ * (gravarSitemap, em admin/inc/nucleo.php) — mesmas regras, mesmo resultado.
+ */
+function sitemap(enderecos) {
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    enderecos
+      .filter((u) => /^[a-z0-9-]+\.html$/.test(u))
+      .map((u) => `  <url><loc>${ENDERECO_DO_SITE}/${u === 'index.html' ? '' : u}</loc></url>\n`)
+      .join('') +
+    '</urlset>\n';
+}
 
 /** Substitui {{CHAVE}} pelos valores informados. */
 function applyTemplate(template, values) {
@@ -508,6 +536,7 @@ function buildSearchIndex(modelos) {
     `window.SEARCH_INDEX = ${JSON.stringify(entries)};\n`;
   fs.writeFileSync(path.join(ROOT, 'assets', 'js', 'search-index.js'), file);
   if (modelos) fs.writeFileSync(path.join(modelos, 'busca-base.json'), JSON.stringify(fixas) + '\n');
+  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), sitemap(entries.map((e) => e.url)));
   return entries.length;
 }
 
@@ -577,7 +606,7 @@ function build({ modelos } = {}) {
       }
     }
 
-    const modelo = applyTemplate(page.bare ? layoutBare : layout, {
+    let modelo = applyTemplate(page.bare ? layoutBare : layout, {
       TITLE: page.title,
       DESCRIPTION: page.description,
       HEAD_EXTRA: page.headExtra || '',
@@ -589,6 +618,7 @@ function build({ modelos } = {}) {
       NOINDEX: page.indexable === false ? '\n  <meta name="robots" content="noindex">' : '',
       ...versoes,
     });
+    if (page.slug === '404') modelo = enderecosDaRaiz(modelo);
 
     // Primeiro o conteúdo gerado (a lista de artigos), depois os dados de
     // contato — a mesma ordem que o painel PHP segue.

@@ -12,7 +12,15 @@
 (function () {
   'use strict';
 
-  const ENDERECO = 'assistente/responder.php';
+  /* Endereços do site calculados a partir deste arquivo (assets/js/), e não
+     da página: assim funcionam em qualquer endereço — inclusive na página de
+     erro 404, que a hospedagem mostra até dentro de pastas que não existem. */
+  const RAIZ = (function () {
+    const src = document.currentScript && document.currentScript.src;
+    try { return src ? new URL('../../', src).href : ''; } catch (e) { return ''; }
+  })();
+  const doSite = (caminho) => RAIZ + caminho;
+  const ENDERECO = doSite('assistente/responder.php');
   const CHAVE_CONVERSA = 'assistente-conversa';
   const CHAVE_REABRIR = 'assistente-reabrir';
   const MAX_CARACTERES = 800;
@@ -137,7 +145,7 @@
         href = 'https://cvv.org.br/';
         externo = true;
       } else if (PAGINA_DO_SITE.test(alvo.toLowerCase())) {
-        href = alvo.toLowerCase();
+        href = doSite(alvo.toLowerCase());
       }
 
       if (!href) continue;
@@ -239,7 +247,7 @@
       const b = el('button', { type: 'button', class: 'assistente-sugestao' }, s);
       b.addEventListener('click', function () { perguntar(s); });
       return b;
-    }).concat(el('a', { class: 'assistente-sugestao assistente-sugestao--contato', href: 'contato.html' },
+    }).concat(el('a', { class: 'assistente-sugestao assistente-sugestao--contato', href: doSite('contato.html') },
       'Falar com a equipe')));
 
   const campo = el('textarea', {

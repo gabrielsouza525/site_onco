@@ -1,0 +1,42 @@
+# Regras do site na hospedagem (LiteSpeed/Apache), na raiz da public_html.
+# Vai no pacote junto com as páginas (scripts/pacote.js).
+
+# Página de erro do próprio site, no lugar da página padrão da hospedagem.
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Um endereço só: sem "www"...
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+  # ...e sempre com https (cadeado).
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Página antiga: "Leis e direitos" virou "Artigos".
+  RewriteRule ^direitos\.html$ /artigos.html [L,R=301]
+</IfModule>
+
+# O zip do pacote, enviado para ser extraído aqui, não pode ser baixado.
+<FilesMatch "\.zip$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Páginas: o navegador confere com o servidor antes de reaproveitar a cópia
+# guardada (resposta curta, "304", quando nada mudou). Sem isto, quem já
+# visitou o site podia ver a versão antiga por dias depois de uma atualização.
+# CSS e JS não precisam: o endereço deles muda a cada versão (?v=...).
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
