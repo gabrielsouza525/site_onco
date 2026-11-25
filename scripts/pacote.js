@@ -61,6 +61,12 @@ fs.writeFileSync(
 fs.copyFileSync(path.join(ROOT, 'src', 'data', 'site.json'), path.join(modelos, 'site-inicial.json'));
 // Artigos iniciais: valem até o painel salvar a primeira lista própria.
 fs.copyFileSync(path.join(ROOT, 'src', 'data', 'artigos.json'), path.join(modelos, 'artigos-inicial.json'));
+// As páginas deste pacote. Extrair por cima não apaga modelos de páginas que
+// saíram do site; com a lista, o painel ignora as sobras (modelosDisponiveis).
+fs.writeFileSync(
+  path.join(modelos, 'paginas.json'),
+  JSON.stringify(fs.readdirSync(modelos).filter((n) => /^[a-z0-9-]+\.html$/.test(n)).sort()) + '\n'
+);
 
 /* 2. O que entra no zip -------------------------------------------------- */
 function listar(pasta, prefixo, filtro) {

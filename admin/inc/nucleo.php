@@ -942,10 +942,17 @@ function gravarIndiceDeBusca(array $artigos): string
 /** @return string[] nomes dos modelos, só os que têm cara de página do site */
 function modelosDisponiveis(): array
 {
+    // Extrair um zip por cima não apaga o que o pacote novo deixou de ter:
+    // uma página removida do site continuaria aqui como modelo e voltaria a
+    // ser publicada (foi o caso do direitos.html). O pacote traz a lista das
+    // páginas dele; o que não está nela é sobra de um pacote antigo.
+    $doPacote = lerJson(MODELOS_DIR . '/paginas.json');
+
     $nomes = [];
     foreach (glob(MODELOS_DIR . '/*.html') ?: [] as $arquivo) {
         $nome = basename($arquivo);
-        if (preg_match('/^[a-z0-9-]+\.html$/', $nome)) {
+        if (preg_match('/^[a-z0-9-]+\.html$/', $nome)
+            && ($doPacote === null || in_array($nome, $doPacote, true))) {
             $nomes[] = $nome;
         }
     }
