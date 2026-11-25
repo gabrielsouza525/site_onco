@@ -71,8 +71,21 @@ Abra <http://localhost:8080>. Abrir os arquivos direto pelo `file://` também fu
 O site oficial fica na hospedagem do domínio **drbrunokersten.com.br** (DirectAdmin), com o
 painel administrativo em PHP. Veja [Painel administrativo e hospedagem](#painel-administrativo-e-hospedagem).
 
-A cópia no GitHub Pages continua funcionando como vitrine do repositório, mas sem painel:
-lá o PHP não roda.
+As cópias antigas foram desativadas para o Google não ver o site duplicado: o GitHub
+Pages foi desligado nas configurações do repositório, e a Netlify redireciona tudo para o
+domínio (`netlify.toml`).
+
+Na hospedagem, o `.htaccess` da raiz (que vai no pacote) cuida de:
+
+- endereço único: `http://` e `www.` redirecionam para `https://drbrunokersten.com.br`;
+- página 404 do próprio site (`404.html`, com endereços a partir da raiz);
+- `direitos.html`, página antiga, redireciona para `artigos.html`;
+- o zip do pacote não pode ser baixado, mesmo se ficar na `public_html`;
+- páginas `.html` com `Cache-Control: no-cache`: quem já visitou vê a versão nova logo
+  depois de uma atualização.
+
+O `sitemap.xml` é gerado pelo build e regravado pelo painel quando os artigos mudam; o
+`robots.txt` aponta para ele.
 
 ---
 

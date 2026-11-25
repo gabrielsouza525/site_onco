@@ -4,6 +4,8 @@
  *
  * O que vai no zip, para extrair dentro da public_html:
  *   *.html           as páginas prontas, com os dados de src/data/site.json
+ *   .htaccess        https, endereço sem www, página 404, cache das páginas
+ *   robots.txt, sitemap.xml   para o Google (o painel regrava o sitemap)
  *   assets/          imagens, CSS, JS e o índice da busca
  *   admin/           o painel em PHP
  *   admin/modelos/   cada página SEM os dados de contato ({{TELEFONE}} etc.),
@@ -59,6 +61,12 @@ fs.writeFileSync(
 fs.copyFileSync(path.join(ROOT, 'src', 'data', 'site.json'), path.join(modelos, 'site-inicial.json'));
 // Artigos iniciais: valem até o painel salvar a primeira lista própria.
 fs.copyFileSync(path.join(ROOT, 'src', 'data', 'artigos.json'), path.join(modelos, 'artigos-inicial.json'));
+// As páginas deste pacote. Extrair por cima não apaga modelos de páginas que
+// saíram do site; com a lista, o painel ignora as sobras (modelosDisponiveis).
+fs.writeFileSync(
+  path.join(modelos, 'paginas.json'),
+  JSON.stringify(fs.readdirSync(modelos).filter((n) => /^[a-z0-9-]+\.html$/.test(n)).sort()) + '\n'
+);
 
 /* 2. O que entra no zip -------------------------------------------------- */
 function listar(pasta, prefixo, filtro) {
@@ -87,8 +95,14 @@ const paginasProntas = fs.readdirSync(ROOT)
   .sort()
   .map((nome) => ({ nome, origem: path.join(ROOT, nome) }));
 
+// Arquivos da raiz que não são páginas: as regras da hospedagem (.htaccess:
+// https, página 404, cache das páginas) e o que orienta o Google.
+const daRaiz = ['.htaccess', 'robots.txt', 'sitemap.xml']
+  .map((nome) => ({ nome, origem: path.join(ROOT, nome) }));
+
 const arquivos = [
   ...paginasProntas,
+  ...daRaiz,
   ...listar(path.join(ROOT, 'assets'), 'assets/'),
   ...listar(path.join(ROOT, 'admin'), 'admin/', doAdmin),
   ...listar(modelos, 'admin/modelos/'),

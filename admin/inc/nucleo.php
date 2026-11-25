@@ -942,10 +942,17 @@ function gravarIndiceDeBusca(array $artigos): string
 /** @return string[] nomes dos modelos, só os que têm cara de página do site */
 function modelosDisponiveis(): array
 {
+    // Extrair um zip por cima não apaga o que o pacote novo deixou de ter:
+    // uma página removida do site continuaria aqui como modelo e voltaria a
+    // ser publicada (foi o caso do direitos.html). O pacote traz a lista das
+    // páginas dele; o que não está nela é sobra de um pacote antigo.
+    $doPacote = lerJson(MODELOS_DIR . '/paginas.json');
+
     $nomes = [];
     foreach (glob(MODELOS_DIR . '/*.html') ?: [] as $arquivo) {
         $nome = basename($arquivo);
-        if (preg_match('/^[a-z0-9-]+\.html$/', $nome)) {
+        if (preg_match('/^[a-z0-9-]+\.html$/', $nome)
+            && ($doPacote === null || in_array($nome, $doPacote, true))) {
             $nomes[] = $nome;
         }
     }
@@ -958,6 +965,32 @@ function modelosDisponiveis(): array
  * Remove só as páginas que o próprio painel publicou antes e que deixaram de
  * existir — arquivos que alguém pôs à mão na hospedagem ficam onde estão.
  */
+/** Endereço oficial do site, para o sitemap.xml. Mesmo valor do build.js. */
+const ENDERECO_DO_SITE = 'https://drbrunokersten.com.br';
+
+/**
+ * sitemap.xml com as páginas fixas e os artigos publicados. Mesmas regras do
+ * sitemap() do build.js: o arquivo sai idêntico ao do pacote enquanto os
+ * artigos forem os mesmos.
+ */
+function gravarSitemap(array $artigos): void
+{
+    $enderecos = array_merge(
+        array_column(lerJson(MODELOS_DIR . '/busca-base.json') ?? [], 'url'),
+        array_map(static function ($artigo) {
+            return entradaDeBusca($artigo)['url'];
+        }, artigosPublicados($artigos))
+    );
+    $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" .
+        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+    foreach ($enderecos as $u) {
+        if (is_string($u) && preg_match('/^[a-z0-9-]+\.html$/', $u)) {
+            $xml .= '  <url><loc>' . ENDERECO_DO_SITE . '/' . ($u === 'index.html' ? '' : $u) . "</loc></url>\n";
+        }
+    }
+    gravarAtomico(RAIZ_SITE . '/sitemap.xml', $xml . "</urlset>\n", 0644);
+}
+
 function publicar(): array
 {
     $modelos = modelosDisponiveis();
@@ -978,6 +1011,7 @@ function publicar(): array
         sincronizarFotos($dados, $artigos);
         $tokens = tokensDoSite($dados);
         $tokens['{{V_BUSCA}}'] = gravarIndiceDeBusca($artigos);
+        gravarSitemap($artigos);
 
         // Mesma ordem do build.js: primeiro o conteúdo gerado (a lista de
         // artigos), depois os dados de contato.
